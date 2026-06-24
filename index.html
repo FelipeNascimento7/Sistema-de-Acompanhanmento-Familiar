@@ -1276,6 +1276,44 @@
       color: var(--danger);
     }
 
+    .login-drive-panel {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface-muted);
+      display: grid;
+      gap: 8px;
+    }
+
+    .login-drive-panel h2 {
+      margin: 0;
+      color: var(--text);
+      font-size: 1rem;
+      line-height: 1.2;
+      font-weight: 950;
+      letter-spacing: -0.02em;
+    }
+
+    .login-drive-panel p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.35;
+    }
+
+    .login-drive-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-top: 4px;
+    }
+
+    .login-drive-actions .solid-button,
+    .login-drive-actions .plain-button {
+      width: auto;
+    }
+
 
 
     .form-panel {
@@ -2702,6 +2740,15 @@
           <h1 id="login-title">Login</h1>
           <p class="hero-text">Entre com um usuário cadastrado para acessar os registros das famílias.</p>
 
+          <section class="login-drive-panel" aria-labelledby="login-drive-title">
+            <h2 id="login-drive-title">Google Drive</h2>
+            <p>Conecte o Google Drive antes de entrar para puxar o backup mais recente e evitar salvar por cima de dados antigos.</p>
+            <div class="login-drive-actions">
+              <button class="solid-button" id="login-connect-drive-button" type="button">Conectar Google Drive</button>
+            </div>
+            <div class="status-line" id="login-drive-sync-status" data-state="idle" role="status">Google Drive desconectado.</div>
+          </section>
+
           <form class="login-form" id="login-form" autocomplete="off">
             <div class="field">
               <label for="login-username">Usuário</label>
@@ -3694,7 +3741,9 @@
     const registerUserStatus = document.querySelector('#register-user-status');
     const cancelRegisterUserButton = document.querySelector('#cancel-register-user');
     const driveSyncStatus = document.querySelector('#drive-sync-status');
+    const loginDriveSyncStatus = document.querySelector('#login-drive-sync-status');
     const connectDriveButton = document.querySelector('#connect-drive-button');
+    const loginConnectDriveButton = document.querySelector('#login-connect-drive-button');
     const syncNowButton = document.querySelector('#sync-now-button');
     const exportJsonButton = document.querySelector('#export-json-button');
     const exportCsvButton = document.querySelector('#export-csv-button');
@@ -5170,6 +5219,16 @@
       showScreen(navigationButton.dataset.screen);
     });
 
+    function setDriveButtonText(text) {
+      if (connectDriveButton) {
+        connectDriveButton.textContent = text;
+      }
+
+      if (loginConnectDriveButton) {
+        loginConnectDriveButton.textContent = text;
+      }
+    }
+
     function setSyncStatus(message, state = 'idle') {
       headerSyncStatus.textContent = message;
       headerSyncStatus.dataset.state = state;
@@ -5177,6 +5236,11 @@
       if (driveSyncStatus) {
         driveSyncStatus.textContent = message;
         driveSyncStatus.dataset.state = state;
+      }
+
+      if (loginDriveSyncStatus) {
+        loginDriveSyncStatus.textContent = message;
+        loginDriveSyncStatus.dataset.state = state;
       }
     }
 
@@ -5236,13 +5300,13 @@
           if (!response || response.error || !response.access_token) {
             googleAccessToken = null;
             setSyncStatus('Reconecte o Google Drive.', 'error');
-            connectDriveButton.textContent = 'Reconectar Google Drive';
+            setDriveButtonText('Reconectar Google Drive');
             return;
           }
 
           googleAccessToken = response.access_token;
           localStorage.setItem(drivePreferenceKey, 'true');
-          connectDriveButton.textContent = 'Google Drive conectado';
+          setDriveButtonText('Google Drive conectado');
           setSyncStatus('Carregando backup do Google Drive...', 'syncing');
 
           try {
@@ -8922,12 +8986,15 @@
       event.returnValue = '';
     });
 
-    connectDriveButton.addEventListener('click', () => {
+    function handleDriveConnectionRequest() {
       requestGoogleDriveAccess({ silent: false }).catch((error) => {
         console.warn('Erro ao conectar Google Drive.', error);
         setSyncStatus('Erro ao conectar Google Drive.', 'error');
       });
-    });
+    }
+
+    connectDriveButton?.addEventListener('click', handleDriveConnectionRequest);
+    loginConnectDriveButton?.addEventListener('click', handleDriveConnectionRequest);
 
     syncNowButton.addEventListener('click', async () => {
       if (!googleAccessToken) {
@@ -9005,6 +9072,8 @@
 
     if (!isGoogleDriveConfigured()) {
       setSyncStatus('Configure o Client ID do Google Drive.', 'error');
+    } else if (localStorage.getItem(drivePreferenceKey) !== 'true') {
+      setSyncStatus('Conecte o Google Drive para carregar o backup antes de entrar.', 'idle');
     }
   </script>
 </body>
