@@ -3868,6 +3868,7 @@
     let isApplyingRemoteState = false;
     let isDriveBusy = false;
     let pendingDriveSave = false;
+    let pendingDriveSaveOptions = {};
 
     let appState = createDefaultState();
 
@@ -4072,7 +4073,10 @@
       renderApp();
 
       if (!options.skipDrive && !isApplyingRemoteState) {
-        scheduleDriveSave();
+        scheduleDriveSave({
+          mergeBeforeSave: options.mergeBeforeSave !== false,
+          forceOverwrite: options.forceOverwrite === true
+        });
       }
     }
 
@@ -4100,6 +4104,170 @@
       isApplyingRemoteState = false;
       renderApp();
       setFamilyFormBaseline();
+    }
+
+    function cloneStateValue(value) {
+      return JSON.parse(JSON.stringify(value ?? null));
+    }
+
+    function getRecordSyncTimestamp(record = {}) {
+      return Date.parse(record.updatedAt || record.createdAt || record.date || '') || 0;
+    }
+
+    function getRecordSyncKey(record, fallbackPrefix, index) {
+      if (record && typeof record === 'object') {
+        if (record.id) {
+          return `id:${record.id}`;
+        }
+
+        if (record.username) {
+          return `username:${String(record.username).toLocaleLowerCase('pt-BR')}`;
+        }
+
+        if (record.title || record.createdAt || record.date) {
+          return `composite:${record.title || ''}|${record.createdAt || ''}|${record.date || ''}`;
+        }
+      }
+
+      return `${fallbackPrefix}:${index}:${JSON.stringify(record)}`;
+    }
+
+    function mergeRecordArrays(remoteRecords = [], localRecords = [], fallbackPrefix = 'record') {
+      const merged = new Map();
+      const order = [];
+
+      function putRecord(record, source, index) {
+        if (!record || typeof record !== 'object') {
+          return;
+        }
+
+        const key = getRecordSyncKey(record, `${fallbackPrefix}-${source}`, index);
+        const candidate = cloneStateValue(record);
+        const current = merged.get(key);
+
+        if (!current) {
+          merged.set(key, candidate);
+          order.push(key);
+          return;
+        }
+
+        const currentTime = getRecordSyncTimestamp(current);
+        const candidateTime = getRecordSyncTimestamp(candidate);
+
+        if (candidateTime >= currentTime) {
+          merged.set(key, candidate);
+        }
+      }
+
+      (remoteRecords || []).forEach((record, index) => putRecord(record, 'remote', index));
+      (localRecords || []).forEach((record, index) => putRecord(record, 'local', index));
+
+      return order.map((key) => merged.get(key)).filter(Boolean);
+    }
+
+    function mergeUserArrays(remoteUsers = [], localUsers = []) {
+      return mergeRecordArrays(remoteUsers, localUsers, 'user').sort((firstUser, secondUser) => {
+        return String(firstUser.username || '').localeCompare(String(secondUser.username || ''), 'pt-BR', {
+          sensitivity: 'base',
+          numeric: true
+        });
+      });
+    }
+
+    function mergeOptionSetsForSync(remoteOptionSets = {}, localOptionSets = {}) {
+      const merged = cloneDefaultOptionSets();
+      const optionKeys = new Set([
+        ...Object.keys(remoteOptionSets || {}),
+        ...Object.keys(localOptionSets || {}),
+        ...Object.keys(defaultOptionSets || {})
+      ]);
+
+      optionKeys.forEach((key) => {
+        const defaultConfig = defaultOptionSets[key] || { label: key, options: [] };
+        const remoteConfig = remoteOptionSets?.[key] || {};
+        const localConfig = localOptionSets?.[key] || {};
+        const allOptions = [
+          ...(Array.isArray(defaultConfig.options) ? defaultConfig.options : []),
+          ...(Array.isArray(remoteConfig.options) ? remoteConfig.options : []),
+          ...(Array.isArray(localConfig.options) ? localConfig.options : [])
+        ];
+
+        merged[key] = {
+          label: localConfig.label || remoteConfig.label || defaultConfig.label || key,
+          options: key === 'incomeSources'
+            ? normalizeIncomeSourceOptions(allOptions)
+            : uniqueOptionValues(allOptions)
+        };
+      });
+
+      return merged;
+    }
+
+    function mergeStatesForDriveSync(remoteStateCandidate, localStateCandidate, options = {}) {
+      const remoteState = normalizeState(remoteStateCandidate);
+      const localState = normalizeState(localStateCandidate);
+
+      if (options.forceOverwrite) {
+        return normalizeState(localState);
+      }
+
+      const remoteTime = Date.parse(remoteState.updatedAt || '') || 0;
+      const localTime = Date.parse(localState.updatedAt || '') || 0;
+      const newestState = localTime >= remoteTime ? localState : remoteState;
+      const mergedCollections = {};
+      const collectionKeys = new Set([
+        ...Object.keys(createDefaultState().collections || {}),
+        ...Object.keys(remoteState.collections || {}),
+        ...Object.keys(localState.collections || {})
+      ]);
+
+      collectionKeys.forEach((key) => {
+        mergedCollections[key] = mergeRecordArrays(
+          remoteState.collections?.[key] || [],
+          localState.collections?.[key] || [],
+          key
+        );
+      });
+
+      const mergedState = normalizeState({
+        ...remoteState,
+        ...newestState,
+        collections: mergedCollections,
+        security: {
+          ...remoteState.security,
+          ...newestState.security,
+          users: mergeUserArrays(remoteState.security?.users || [], localState.security?.users || [])
+        },
+        metadata: {
+          ...remoteState.metadata,
+          ...newestState.metadata,
+          optionSets: mergeOptionSetsForSync(remoteState.metadata?.optionSets || {}, localState.metadata?.optionSets || {})
+        },
+        extensions: {
+          ...remoteState.extensions,
+          ...localState.extensions
+        }
+      });
+
+      mergedState.updatedAt = new Date().toISOString();
+      mergedState.updatedBy = getDeviceId();
+      return mergedState;
+    }
+
+    function applyMergedStateAfterDriveSync(mergedState) {
+      isApplyingRemoteState = true;
+      appState = normalizeState(mergedState);
+      localStorage.setItem(storageKey, JSON.stringify(appState));
+      isApplyingRemoteState = false;
+      renderApp();
+      setFamilyFormBaseline();
+    }
+
+    function mergeDriveSaveOptions(currentOptions = {}, nextOptions = {}) {
+      return {
+        mergeBeforeSave: currentOptions.mergeBeforeSave !== false && nextOptions.mergeBeforeSave !== false,
+        forceOverwrite: currentOptions.forceOverwrite === true || nextOptions.forceOverwrite === true
+      };
     }
 
     function deleteAllRecordsWithPassword() {
@@ -4196,7 +4364,7 @@
         resetFamilyForm();
       }
 
-      saveAppState();
+      saveAppState({ forceOverwrite: true });
       setDeleteAllRecordsStatus('Todos os registros foram apagados. Apenas metadados/opções foram preservados.', 'connected');
       setLoginStatus('Todos os registros foram apagados. Registre um novo usuário para acessar o sistema.', 'success');
       showScreen('login-screen');
@@ -5082,8 +5250,10 @@
             setSyncStatus('Google Drive sincronizado.', 'connected');
 
             if (pendingDriveSave) {
+              const optionsForPendingSave = pendingDriveSaveOptions;
               pendingDriveSave = false;
-              await saveStateToDrive();
+              pendingDriveSaveOptions = {};
+              await saveStateToDrive(optionsForPendingSave);
             }
           } catch (error) {
             console.warn('Não foi possível carregar do Google Drive.', error);
@@ -5211,12 +5381,14 @@
       }
 
       isDriveBusy = true;
+      setSyncStatus('Puxando backup do Google Drive...', 'syncing');
 
       try {
         const existingFile = await findDriveStateFile();
 
         if (!existingFile) {
           await createDriveStateFile(appState);
+          setSyncStatus('Backup inicial criado no Google Drive.', 'connected');
           return;
         }
 
@@ -5225,17 +5397,28 @@
         const localTime = Date.parse(appState.updatedAt || '') || 0;
         const remoteTime = Date.parse(remoteState.updatedAt || '') || 0;
 
-        if (options.preferRemote || remoteTime >= localTime) {
+        if (options.preferRemote) {
           applyLoadedState(remoteState);
-        } else {
+          setSyncStatus('Backup do Google Drive carregado.', 'connected');
+          return;
+        }
+
+        const mergedState = mergeStatesForDriveSync(remoteState, appState);
+        applyMergedStateAfterDriveSync(mergedState);
+
+        if (localTime > remoteTime || options.saveAfterMerge) {
           pendingDriveSave = true;
         }
+
+        setSyncStatus('Backup do Google Drive carregado e combinado com os dados locais.', 'connected');
       } finally {
         isDriveBusy = false;
       }
     }
 
-    function scheduleDriveSave() {
+    function scheduleDriveSave(options = {}) {
+      pendingDriveSaveOptions = mergeDriveSaveOptions(pendingDriveSaveOptions, options);
+
       if (!googleAccessToken) {
         pendingDriveSave = true;
         return;
@@ -5243,32 +5426,45 @@
 
       clearTimeout(driveSaveTimer);
       driveSaveTimer = setTimeout(() => {
-        saveStateToDrive().catch((error) => {
+        const optionsForSave = pendingDriveSaveOptions;
+        pendingDriveSaveOptions = {};
+        saveStateToDrive(optionsForSave).catch((error) => {
           console.warn('Não foi possível salvar no Google Drive.', error);
           setSyncStatus('Erro ao salvar no Google Drive.', 'error');
         });
       }, 700);
     }
 
-    async function saveStateToDrive() {
+    async function saveStateToDrive(options = {}) {
+      const saveOptions = mergeDriveSaveOptions({ mergeBeforeSave: true, forceOverwrite: false }, options);
+
       if (!googleAccessToken) {
         pendingDriveSave = true;
+        pendingDriveSaveOptions = mergeDriveSaveOptions(pendingDriveSaveOptions, saveOptions);
         return;
       }
 
       if (isDriveBusy) {
         pendingDriveSave = true;
+        pendingDriveSaveOptions = mergeDriveSaveOptions(pendingDriveSaveOptions, saveOptions);
         return;
       }
 
       isDriveBusy = true;
-      setSyncStatus('Salvando no Google Drive...', 'syncing');
+      setSyncStatus(saveOptions.forceOverwrite ? 'Substituindo backup no Google Drive...' : 'Puxando backup do Google Drive antes de salvar...', 'syncing');
 
       try {
-        if (!driveFileId) {
-          const existingFile = await findDriveStateFile();
-          driveFileId = existingFile?.id || null;
+        const existingFile = await findDriveStateFile();
+        driveFileId = existingFile?.id || null;
+
+        if (saveOptions.mergeBeforeSave !== false && !saveOptions.forceOverwrite && driveFileId) {
+          const remoteState = normalizeState(await downloadDriveState(driveFileId));
+          const mergedState = mergeStatesForDriveSync(remoteState, appState);
+          applyMergedStateAfterDriveSync(mergedState);
         }
+
+        setSyncStatus('Salvando backup local e Google Drive...', 'syncing');
+        localStorage.setItem(storageKey, JSON.stringify(appState));
 
         if (driveFileId) {
           await updateDriveStateFile(driveFileId, appState);
@@ -5277,13 +5473,16 @@
         }
 
         pendingDriveSave = false;
+        pendingDriveSaveOptions = {};
         setSyncStatus('Google Drive sincronizado.', 'connected');
       } finally {
         isDriveBusy = false;
 
         if (pendingDriveSave) {
+          const optionsForPendingSave = pendingDriveSaveOptions;
           pendingDriveSave = false;
-          scheduleDriveSave();
+          pendingDriveSaveOptions = {};
+          scheduleDriveSave(optionsForPendingSave);
         }
       }
     }
@@ -5381,9 +5580,9 @@
               { label: 'Agendamentos no pacote', value: appState.collections.appointments.length }
             ])
           });
-          saveAppState();
+          saveAppState({ forceOverwrite: true });
           pendingDriveSave = true;
-          scheduleDriveSave();
+          scheduleDriveSave({ forceOverwrite: true, mergeBeforeSave: false });
         } catch (error) {
           console.warn('Não foi possível importar JSON.', error);
           setSyncStatus('Arquivo JSON inválido.', 'error');
@@ -5894,7 +6093,7 @@
           { label: 'Opção excluída', value: optionValue }
         ]
       });
-      saveAppState();
+      saveAppState({ forceOverwrite: true });
       renderManagedOptionSelects();
       renderOptionManagerList();
     }
@@ -8737,8 +8936,8 @@
       }
 
       try {
-        await loadStateFromDrive({ preferRemote: true });
-        await saveStateToDrive();
+        await loadStateFromDrive({ saveAfterMerge: true });
+        await saveStateToDrive({ mergeBeforeSave: false });
       } catch (error) {
         console.warn('Erro ao sincronizar agora.', error);
         setSyncStatus('Erro ao sincronizar agora.', 'error');
