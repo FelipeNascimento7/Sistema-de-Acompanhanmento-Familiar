@@ -2905,14 +2905,9 @@
                   <label for="family-data-cadastro">Data de cadastro</label>
                   <input id="family-data-cadastro" name="dataCadastro" type="date" data-date-input="true" autocomplete="off">
                 </div>
-                <div class="field option-field">
-                  <div class="field-label-row">
-                    <label for="family-responsavel-cadastro">Responsável pelo cadastro <span aria-hidden="true">*</span></label>
-                    <button class="option-manage-button" type="button" data-option-set="responsaveisCadastro" data-option-target="family-responsavel-cadastro" data-option-label="Responsável pelo cadastro" aria-label="Editar opções de Responsável pelo cadastro">⋯</button>
-                  </div>
-                  <select id="family-responsavel-cadastro" name="responsavelCadastro" data-option-select="responsaveisCadastro" required aria-required="true">
-                    <option value="">Selecionar</option>
-                  </select>
+                <div class="field">
+                  <label for="family-responsavel-cadastro">Responsável pelo cadastro</label>
+                  <input id="family-responsavel-cadastro" name="responsavelCadastro" type="text" readonly aria-readonly="true" autocomplete="off" placeholder="Preenchido automaticamente pelo usuário logado">
                 </div>
               </div>
             </section>
@@ -3501,7 +3496,7 @@
 
           <section class="settings-section" aria-labelledby="delete-records-title">
             <h2 id="delete-records-title">Apagar registros</h2>
-            <p>Apague todos os registros cadastrados no app, incluindo usuários e histórico de alterações. Apenas os metadados/opções editáveis serão preservados. Esta ação exige senha e não pode ser desfeita.</p>
+            <p>Apague todos os registros cadastrados no app, incluindo usuários, histórico de alterações e o arquivo de backup no Google Drive. Apenas os metadados/opções editáveis serão preservados. Esta ação exige senha e não pode ser desfeita.</p>
             <div class="settings-actions">
               <button class="danger-button" id="delete-all-records-button" type="button">Apagar todos os registros</button>
             </div>
@@ -3717,7 +3712,7 @@
     const authSessionKey = `${storageKey}-auth-session`;
 
     const googleDriveConfig = {
-      clientId: '956584687010-j1ito94g76aniq738tkikvrj1tui6f9f.apps.googleusercontent.com',
+      clientId: 'https://felipenascimento7.github.io/Sistema-de-Acompanhanmento-Familiar/',
       scope: 'https://www.googleapis.com/auth/drive.appdata',
       fileName: 'sistema-acompanhamento-familias-backup.json',
       fileMimeType: 'application/json'
@@ -3770,6 +3765,7 @@
     const timelineList = document.querySelector('#timeline-list');
     const familyForm = document.querySelector('#family-form');
     const familyDataCadastroInput = document.querySelector('#family-data-cadastro');
+    const familyResponsavelCadastroInput = document.querySelector('#family-responsavel-cadastro');
     const familyBirthInput = document.querySelector('#family-data-nascimento');
     const familyAgeInput = document.querySelector('#family-idade');
     const familyMembersBody = document.querySelector('#family-members-body');
@@ -3869,7 +3865,7 @@
     const defaultOptionSets = {
       responsaveisCadastro: {
         label: 'Responsável pelo cadastro',
-        options: ['Talita Nascimento']
+        options: []
       },
       parentesco: {
         label: 'Parentesco',
@@ -3918,6 +3914,8 @@
     let isDriveBusy = false;
     let pendingDriveSave = false;
     let pendingDriveSaveOptions = {};
+    let pendingDriveAuthOptions = {};
+    let driveAccessWaiters = [];
 
     let appState = createDefaultState();
 
@@ -4319,7 +4317,7 @@
       };
     }
 
-    function deleteAllRecordsWithPassword() {
+    async function deleteAllRecordsWithPassword() {
       const password = window.prompt('Digite a senha para apagar todos os registros:');
 
       if (password === null) {
@@ -4332,10 +4330,56 @@
         return;
       }
 
-      const confirmed = window.confirm('Senha confirmada. Esta ação apagará todos os registros, histórico de alterações, usuários e sessões salvas. Apenas os metadados/opções editáveis serão preservados. Deseja continuar?');
+      const confirmed = window.confirm('Senha confirmada. Esta ação apagará todos os registros locais, histórico de alterações, usuários, sessões salvas e também o backup do Google Drive. Apenas os metadados/opções editáveis serão preservados. Deseja continuar?');
 
       if (!confirmed) {
         setDeleteAllRecordsStatus('Exclusão cancelada. Nenhum registro foi apagado.', 'idle');
+        return;
+      }
+
+      if (isDriveBusy) {
+        setDeleteAllRecordsStatus('Aguarde a sincronização atual do Google Drive terminar e tente novamente.', 'error');
+        return;
+      }
+
+      if (!googleAccessToken) {
+        if (!isGoogleDriveConfigured()) {
+          setDeleteAllRecordsStatus('Configure o Client ID e conecte o Google Drive antes de apagar todos os registros.', 'error');
+          return;
+        }
+
+        const authorizeDriveDeletion = window.confirm('Para apagar também o backup do Google Drive, autorize a conexão com o Google agora. Continuar?');
+
+        if (!authorizeDriveDeletion) {
+          setDeleteAllRecordsStatus('Exclusão cancelada. O backup do Google Drive não foi apagado.', 'idle');
+          return;
+        }
+
+        try {
+          setDeleteAllRecordsStatus('Aguardando autorização do Google Drive para apagar o backup...', 'syncing');
+          await requestGoogleDriveAccess({ silent: false, skipInitialSync: true });
+        } catch (error) {
+          console.warn('Não foi possível autorizar o Google Drive para apagar o backup.', error);
+          setDeleteAllRecordsStatus('Não foi possível autorizar o Google Drive. Nenhum registro foi apagado.', 'error');
+          return;
+        }
+
+        if (!googleAccessToken) {
+          setDeleteAllRecordsStatus('Google Drive não autorizado. Nenhum registro foi apagado.', 'error');
+          return;
+        }
+      }
+
+      clearTimeout(driveSaveTimer);
+      pendingDriveSave = false;
+      pendingDriveSaveOptions = {};
+
+      try {
+        setDeleteAllRecordsStatus('Apagando backup do Google Drive...', 'syncing');
+        await deleteDriveBackupFromGoogleDrive();
+      } catch (error) {
+        console.warn('Não foi possível apagar o backup do Google Drive.', error);
+        setDeleteAllRecordsStatus('Erro ao apagar o backup do Google Drive. Nenhum registro local foi apagado.', 'error');
         return;
       }
 
@@ -4413,8 +4457,8 @@
         resetFamilyForm();
       }
 
-      saveAppState({ forceOverwrite: true });
-      setDeleteAllRecordsStatus('Todos os registros foram apagados. Apenas metadados/opções foram preservados.', 'connected');
+      saveAppState({ skipDrive: true });
+      setDeleteAllRecordsStatus('Todos os registros foram apagados e o backup do Google Drive foi excluído. Apenas metadados/opções foram preservados.', 'connected');
       setLoginStatus('Todos os registros foram apagados. Registre um novo usuário para acessar o sistema.', 'success');
       showScreen('login-screen');
     }
@@ -5281,6 +5325,26 @@
       });
     }
 
+    function resolveDriveAccessWaiters(value) {
+      const waiters = driveAccessWaiters;
+      driveAccessWaiters = [];
+
+      waiters.forEach((waiter) => {
+        clearTimeout(waiter.timeoutId);
+        waiter.resolve(value);
+      });
+    }
+
+    function rejectDriveAccessWaiters(error) {
+      const waiters = driveAccessWaiters;
+      driveAccessWaiters = [];
+
+      waiters.forEach((waiter) => {
+        clearTimeout(waiter.timeoutId);
+        waiter.reject(error);
+      });
+    }
+
     async function initGoogleDriveAuth() {
       if (!isGoogleDriveConfigured()) {
         setSyncStatus('Configure o Client ID do Google Drive.', 'error');
@@ -5297,19 +5361,30 @@
         client_id: googleDriveConfig.clientId,
         scope: googleDriveConfig.scope,
         callback: async (response) => {
+          const authOptions = pendingDriveAuthOptions || {};
+          pendingDriveAuthOptions = {};
+
           if (!response || response.error || !response.access_token) {
+            const error = new Error('Autorização do Google Drive recusada ou interrompida.');
             googleAccessToken = null;
             setSyncStatus('Reconecte o Google Drive.', 'error');
             setDriveButtonText('Reconectar Google Drive');
+            rejectDriveAccessWaiters(error);
             return;
           }
 
           googleAccessToken = response.access_token;
           localStorage.setItem(drivePreferenceKey, 'true');
           setDriveButtonText('Google Drive conectado');
-          setSyncStatus('Carregando backup do Google Drive...', 'syncing');
 
           try {
+            if (authOptions.skipInitialSync) {
+              setSyncStatus('Google Drive conectado.', 'connected');
+              resolveDriveAccessWaiters(true);
+              return;
+            }
+
+            setSyncStatus('Carregando backup do Google Drive...', 'syncing');
             await loadStateFromDrive({ preferRemote: true });
             setSyncStatus('Google Drive sincronizado.', 'connected');
 
@@ -5319,9 +5394,12 @@
               pendingDriveSaveOptions = {};
               await saveStateToDrive(optionsForPendingSave);
             }
+
+            resolveDriveAccessWaiters(true);
           } catch (error) {
             console.warn('Não foi possível carregar do Google Drive.', error);
             setSyncStatus('Erro ao sincronizar Google Drive.', 'error');
+            rejectDriveAccessWaiters(error);
           }
         }
       });
@@ -5333,12 +5411,26 @@
       const initialized = await initGoogleDriveAuth();
 
       if (!initialized) {
-        return;
+        return false;
+      }
+
+      if (googleAccessToken && options.forceRefresh !== true) {
+        return true;
       }
 
       const prompt = options.silent ? '' : 'consent';
+      pendingDriveAuthOptions = { ...options };
       setSyncStatus(options.silent ? 'Tentando reconectar ao Google Drive...' : 'Abrindo autorização do Google Drive...', 'syncing');
-      googleTokenClient.requestAccessToken({ prompt });
+
+      return new Promise((resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+          driveAccessWaiters = driveAccessWaiters.filter((waiter) => waiter.timeoutId !== timeoutId);
+          reject(new Error('Tempo esgotado aguardando autorização do Google Drive.'));
+        }, 120000);
+
+        driveAccessWaiters.push({ resolve, reject, timeoutId });
+        googleTokenClient.requestAccessToken({ prompt });
+      });
     }
 
     async function findDriveStateFile() {
@@ -5432,6 +5524,51 @@
 
       if (!response.ok) {
         throw new Error('Falha ao atualizar backup no Google Drive.');
+      }
+    }
+
+    async function deleteDriveStateFile(fileId) {
+      const response = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${fileId}`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${googleAccessToken}`
+          }
+        }
+      );
+
+      if (!response.ok && response.status !== 404) {
+        throw new Error('Falha ao apagar backup do Google Drive.');
+      }
+    }
+
+    async function deleteDriveBackupFromGoogleDrive() {
+      if (!googleAccessToken) {
+        throw new Error('Google Drive não conectado.');
+      }
+
+      if (isDriveBusy) {
+        throw new Error('Google Drive ocupado.');
+      }
+
+      isDriveBusy = true;
+      setSyncStatus('Apagando backup do Google Drive...', 'syncing');
+
+      try {
+        const existingFile = driveFileId ? { id: driveFileId } : await findDriveStateFile();
+
+        if (existingFile?.id) {
+          await deleteDriveStateFile(existingFile.id);
+        }
+
+        driveFileId = null;
+        pendingDriveSave = false;
+        pendingDriveSaveOptions = {};
+        clearTimeout(driveSaveTimer);
+        setSyncStatus(existingFile?.id ? 'Backup do Google Drive apagado.' : 'Nenhum backup do Google Drive encontrado para apagar.', 'connected');
+      } finally {
+        isDriveBusy = false;
       }
     }
 
@@ -5826,6 +5963,35 @@
       if (logoutButton) {
         logoutButton.hidden = !authenticated;
       }
+
+      enforceRegistrationResponsibleField();
+      if (authenticated && familyFormMode === 'create' && !activeViewedFamilyId) {
+        setRegistrationResponsibleField();
+      }
+    }
+
+    function getLoggedRegistrationResponsible() {
+      const activeSessionUser = currentUser ? findUserById(currentUser.id) : null;
+      return normalizeUsername(activeSessionUser?.username || currentUser?.username || '');
+    }
+
+    function enforceRegistrationResponsibleField() {
+      if (!familyResponsavelCadastroInput) {
+        return;
+      }
+
+      familyResponsavelCadastroInput.readOnly = true;
+      familyResponsavelCadastroInput.setAttribute('aria-readonly', 'true');
+      familyResponsavelCadastroInput.title = 'Este campo é preenchido automaticamente com o usuário logado.';
+    }
+
+    function setRegistrationResponsibleField(value = '') {
+      if (!familyResponsavelCadastroInput) {
+        return;
+      }
+
+      enforceRegistrationResponsibleField();
+      familyResponsavelCadastroInput.value = normalizeUsername(value) || getLoggedRegistrationResponsible();
     }
 
     function restoreLoginSession() {
@@ -7536,6 +7702,7 @@
       const memberCount = 1 + members.length;
       const perCapita = totalIncome / memberCount;
       const now = new Date().toISOString();
+      const registrationResponsible = getLoggedRegistrationResponsible() || normalizeUsername(formData.get('responsavelCadastro'));
 
       return {
         id: createId('family'),
@@ -7546,7 +7713,7 @@
         title: formData.get('nome')?.trim() || 'Família sem nome',
         cadastro: {
           dataCadastro: normalizeDateValue(formData.get('dataCadastro')) || getTodayValue(),
-          responsavelCadastro: formData.get('responsavelCadastro') || ''
+          responsavelCadastro: registrationResponsible
         },
         identificacao: {
           nome: formData.get('nome')?.trim() || '',
@@ -7590,6 +7757,7 @@
         family.id = original.id;
         family.createdAt = original.createdAt || family.createdAt;
         family.updatedAt = now;
+        family.cadastro.responsavelCadastro = original.cadastro?.responsavelCadastro || family.cadastro.responsavelCadastro || getLoggedRegistrationResponsible();
         family.extensions = original.extensions || {};
       }
 
@@ -8133,7 +8301,7 @@
       familyFormStatus.textContent = 'Modo edição. Faça as alterações e clique em Salvar família.';
       familyFormStatus.dataset.state = 'idle';
       setFamilyFormBaseline();
-      document.querySelector('#family-responsavel-cadastro')?.focus();
+      document.querySelector('#family-nome')?.focus();
     }
 
     function saveFamily(event) {
@@ -8145,9 +8313,8 @@
         : getFamilyFormData();
 
       if (!family.cadastro.responsavelCadastro) {
-        familyFormStatus.textContent = 'Informe o responsável pelo cadastro.';
+        familyFormStatus.textContent = 'Não foi possível identificar o usuário logado responsável pelo cadastro. Saia e entre novamente.';
         familyFormStatus.dataset.state = 'error';
-        document.querySelector('#family-responsavel-cadastro').focus();
         return;
       }
 
@@ -8297,6 +8464,7 @@
       familyForm.querySelectorAll('input, select, textarea').forEach((field) => {
         field.disabled = false;
       });
+      enforceRegistrationResponsibleField();
 
       familyForm.querySelectorAll('.option-manage-button').forEach((button) => {
         button.disabled = false;
@@ -8423,6 +8591,7 @@
       setFamilyViewMode(false);
       familyForm.reset();
       setDateInputValue(familyDataCadastroInput, getTodayValue());
+      setRegistrationResponsibleField();
       familyFormStatus.textContent = '';
       familyFormStatus.dataset.state = 'idle';
       renderFamilyMemberRows(5);
@@ -8969,6 +9138,7 @@
         memberDetailFields.idade.value = calculateAge(memberDetailFields.dataNascimento.value);
       });
       setDateInputValue(familyDataCadastroInput, getTodayValue());
+      setRegistrationResponsibleField();
       renderManagedOptionSelects();
       renderFamilyMemberRows(5);
       renderIncomeRows();
