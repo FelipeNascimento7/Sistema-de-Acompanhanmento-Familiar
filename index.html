@@ -2798,16 +2798,15 @@
           <div class="home-search-header">
             <div class="home-search-heading">
               <h2 class="home-search-title" id="home-family-search-title">Buscar representante familiar</h2>
-              <p class="home-search-description">Digite o nome informado na seção Identificação para filtrar as famílias cadastradas.</p>
+              <p class="home-search-description">Digite o nome do representante ou de um componente familiar para filtrar as famílias cadastradas.</p>
             </div>
             <div class="home-search-actions">
-              <button class="plain-button home-search-member-toggle" id="home-family-member-search-toggle" type="button" aria-pressed="false">Buscar também componente familiar</button>
               <button class="plain-button" type="button" data-screen="all-families-screen">Todas Famílias</button>
             </div>
           </div>
-          <input class="home-search-input" id="home-family-search-input" type="search" placeholder="Nome do representante familiar" autocomplete="off" inputmode="search">
+          <input class="home-search-input" id="home-family-search-input" type="search" placeholder="Nome do representante ou componente familiar" autocomplete="off" inputmode="search">
           <div class="home-search-results" id="home-family-search-results" aria-live="polite">
-            <div class="empty-note">Digite um nome para buscar famílias cadastradas.</div>
+            <div class="empty-note">Digite o nome do representante ou de um componente familiar para buscar famílias cadastradas.</div>
           </div>
         </section>
 
@@ -5830,7 +5829,7 @@
 
 
     let currentUser = null;
-    let homeFamilySearchIncludesMembers = false;
+    const homeFamilySearchIncludesMembers = true;
 
     let activeOptionSetKey = null;
     let activeMemberRow = null;
@@ -8633,19 +8632,15 @@
     }
 
     function updateHomeFamilySearchModeButton() {
-      if (!homeFamilyMemberSearchToggle) {
-        return;
+      if (homeFamilyMemberSearchToggle) {
+        homeFamilyMemberSearchToggle.setAttribute('aria-pressed', String(homeFamilySearchIncludesMembers));
+        homeFamilyMemberSearchToggle.title = homeFamilySearchIncludesMembers
+          ? 'A busca considera o representante e os componentes familiares.'
+          : 'Clique para incluir os componentes familiares na busca.';
       }
 
-      homeFamilyMemberSearchToggle.setAttribute('aria-pressed', String(homeFamilySearchIncludesMembers));
-      homeFamilyMemberSearchToggle.title = homeFamilySearchIncludesMembers
-        ? 'A busca considera o representante e os componentes familiares.'
-        : 'Clique para incluir os componentes familiares na busca.';
-
       if (homeFamilySearchInput) {
-        homeFamilySearchInput.placeholder = homeFamilySearchIncludesMembers
-          ? 'Nome do representante ou componente familiar'
-          : 'Nome do representante familiar';
+        homeFamilySearchInput.placeholder = 'Nome do representante ou componente familiar';
       }
     }
 
@@ -8679,9 +8674,7 @@
       if (!query) {
         const empty = document.createElement('div');
         empty.className = 'empty-note';
-        empty.textContent = homeFamilySearchIncludesMembers
-          ? 'Digite o nome do representante ou de um componente familiar para buscar famílias cadastradas.'
-          : 'Digite um nome para buscar famílias cadastradas.';
+        empty.textContent = 'Digite o nome do representante ou de um componente familiar para buscar famílias cadastradas.';
         homeFamilySearchResults.append(empty);
         return;
       }
@@ -8690,7 +8683,7 @@
         .map((family) => {
           const representativeName = family.identificacao?.nome || family.title || '';
           const representativeMatches = normalizeSearchText(representativeName).includes(query);
-          const matchingMembers = homeFamilySearchIncludesMembers ? getMatchingFamilyMembers(family, query) : [];
+          const matchingMembers = getMatchingFamilyMembers(family, query);
           return { family, representativeMatches, matchingMembers };
         })
         .filter((result) => result.representativeMatches || result.matchingMembers.length > 0);
@@ -8698,9 +8691,7 @@
       if (matches.length === 0) {
         const empty = document.createElement('div');
         empty.className = 'empty-note';
-        empty.textContent = homeFamilySearchIncludesMembers
-          ? 'Nenhuma família encontrada para o representante ou componente familiar digitado.'
-          : 'Nenhuma família encontrada para o nome digitado.';
+        empty.textContent = 'Nenhuma família encontrada para o representante ou componente familiar digitado.';
         homeFamilySearchResults.append(empty);
         return;
       }
@@ -9088,15 +9079,7 @@
       homeFamilySearchInput.addEventListener('input', renderHomeFamilySearch);
     }
 
-    if (homeFamilyMemberSearchToggle) {
-      homeFamilyMemberSearchToggle.addEventListener('click', () => {
-        homeFamilySearchIncludesMembers = !homeFamilySearchIncludesMembers;
-        updateHomeFamilySearchModeButton();
-        renderHomeFamilySearch();
-        homeFamilySearchInput?.focus();
-      });
-      updateHomeFamilySearchModeButton();
-    }
+    updateHomeFamilySearchModeButton();
 
     if (allFamiliesSearchInput) {
       allFamiliesSearchInput.addEventListener('input', renderAllFamiliesList);
