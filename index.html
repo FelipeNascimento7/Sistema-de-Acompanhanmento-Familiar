@@ -2190,6 +2190,21 @@
       font-size: 0.9rem;
     }
 
+    .home-search-actions .home-search-member-toggle {
+      min-height: 34px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      line-height: 1.1;
+      white-space: nowrap;
+    }
+
+    .home-search-actions .home-search-member-toggle[aria-pressed="true"] {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: var(--surface);
+    }
+
 
     @media (max-width: 620px) {
       .home-search-header {
@@ -2781,6 +2796,7 @@
               <p class="home-search-description">Digite o nome informado na seção Identificação para filtrar as famílias cadastradas.</p>
             </div>
             <div class="home-search-actions">
+              <button class="plain-button home-search-member-toggle" id="home-family-member-search-toggle" type="button" aria-pressed="false">Buscar também componente familiar</button>
               <button class="plain-button" type="button" data-screen="all-families-screen">Todas Famílias</button>
             </div>
           </div>
@@ -3791,6 +3807,7 @@
     const confirmEditSaveButton = document.querySelector('#confirm-edit-save');
     const familyList = document.querySelector('#family-list');
     const homeFamilySearchInput = document.querySelector('#home-family-search-input');
+    const homeFamilyMemberSearchToggle = document.querySelector('#home-family-member-search-toggle');
     const homeFamilySearchResults = document.querySelector('#home-family-search-results');
     const homeUpcomingAppointments = document.querySelector('#home-upcoming-appointments');
     const allFamiliesSearchInput = document.querySelector('#all-families-search-input');
@@ -5808,6 +5825,7 @@
 
 
     let currentUser = null;
+    let homeFamilySearchIncludesMembers = false;
 
     let activeOptionSetKey = null;
     let activeMemberRow = null;
@@ -8609,10 +8627,46 @@
         .trim();
     }
 
+    function updateHomeFamilySearchModeButton() {
+      if (!homeFamilyMemberSearchToggle) {
+        return;
+      }
+
+      homeFamilyMemberSearchToggle.setAttribute('aria-pressed', String(homeFamilySearchIncludesMembers));
+      homeFamilyMemberSearchToggle.title = homeFamilySearchIncludesMembers
+        ? 'A busca considera o representante e os componentes familiares.'
+        : 'Clique para incluir os componentes familiares na busca.';
+
+      if (homeFamilySearchInput) {
+        homeFamilySearchInput.placeholder = homeFamilySearchIncludesMembers
+          ? 'Nome do representante ou componente familiar'
+          : 'Nome do representante familiar';
+      }
+    }
+
+    function getMatchingFamilyMembers(family, query) {
+      if (!query || !Array.isArray(family?.composicaoFamiliar)) {
+        return [];
+      }
+
+      return family.composicaoFamiliar.filter((member) => {
+        const memberSearchText = normalizeSearchText([
+          member.nome,
+          member.apelido,
+          member.parentesco,
+          member.cpf
+        ].filter(Boolean).join(' '));
+
+        return memberSearchText.includes(query);
+      });
+    }
+
     function renderHomeFamilySearch() {
       if (!homeFamilySearchInput || !homeFamilySearchResults) {
         return;
       }
+
+      updateHomeFamilySearchModeButton();
 
       const query = normalizeSearchText(homeFamilySearchInput.value);
       homeFamilySearchResults.innerHTML = '';
@@ -8620,31 +8674,38 @@
       if (!query) {
         const empty = document.createElement('div');
         empty.className = 'empty-note';
-        empty.textContent = 'Digite um nome para buscar famílias cadastradas.';
+        empty.textContent = homeFamilySearchIncludesMembers
+          ? 'Digite o nome do representante ou de um componente familiar para buscar famílias cadastradas.'
+          : 'Digite um nome para buscar famílias cadastradas.';
         homeFamilySearchResults.append(empty);
         return;
       }
 
       const matches = getFamiliesSortedByRepresentative()
-        .filter((family) => {
+        .map((family) => {
           const representativeName = family.identificacao?.nome || family.title || '';
-          return normalizeSearchText(representativeName).includes(query);
-        });
+          const representativeMatches = normalizeSearchText(representativeName).includes(query);
+          const matchingMembers = homeFamilySearchIncludesMembers ? getMatchingFamilyMembers(family, query) : [];
+          return { family, representativeMatches, matchingMembers };
+        })
+        .filter((result) => result.representativeMatches || result.matchingMembers.length > 0);
 
       if (matches.length === 0) {
         const empty = document.createElement('div');
         empty.className = 'empty-note';
-        empty.textContent = 'Nenhuma família encontrada para o nome digitado.';
+        empty.textContent = homeFamilySearchIncludesMembers
+          ? 'Nenhuma família encontrada para o representante ou componente familiar digitado.'
+          : 'Nenhuma família encontrada para o nome digitado.';
         homeFamilySearchResults.append(empty);
         return;
       }
 
-      matches.forEach((family) => {
-        homeFamilySearchResults.append(createFamilyRepresentativeButton(family));
+      matches.forEach(({ family, matchingMembers }) => {
+        homeFamilySearchResults.append(createFamilyRepresentativeButton(family, { matchingMembers }));
       });
     }
 
-    function createFamilyRepresentativeButton(family) {
+    function createFamilyRepresentativeButton(family, options = {}) {
       const card = document.createElement('button');
       card.className = 'home-search-result';
       card.type = 'button';
@@ -8654,11 +8715,20 @@
       title.className = 'home-search-result-title';
       title.textContent = family.identificacao?.nome || family.title || 'Família sem nome';
 
+      const matchingMembers = Array.isArray(options.matchingMembers) ? options.matchingMembers : [];
+      const memberMatchText = matchingMembers.length > 0
+        ? `${matchingMembers.length === 1 ? 'Componente encontrado' : 'Componentes encontrados'}: ${matchingMembers
+          .map((member) => member.nome || member.apelido || member.parentesco || 'Sem nome')
+          .slice(0, 3)
+          .join(', ')}${matchingMembers.length > 3 ? ` +${matchingMembers.length - 3}` : ''}`
+        : '';
+
       const meta = document.createElement('div');
       meta.className = 'home-search-result-meta';
       meta.textContent = [
         family.cadastro?.dataCadastro ? `Cadastro: ${formatDisplayDate(family.cadastro.dataCadastro)}` : '',
         family.identificacao?.apelido ? `Apelido: ${family.identificacao.apelido}` : '',
+        memberMatchText,
         `Integrantes: ${family.renda?.totalMembros || 0}`
       ].filter(Boolean).join(' · ');
 
@@ -8991,6 +9061,16 @@
 
     if (homeFamilySearchInput) {
       homeFamilySearchInput.addEventListener('input', renderHomeFamilySearch);
+    }
+
+    if (homeFamilyMemberSearchToggle) {
+      homeFamilyMemberSearchToggle.addEventListener('click', () => {
+        homeFamilySearchIncludesMembers = !homeFamilySearchIncludesMembers;
+        updateHomeFamilySearchModeButton();
+        renderHomeFamilySearch();
+        homeFamilySearchInput?.focus();
+      });
+      updateHomeFamilySearchModeButton();
     }
 
     if (allFamiliesSearchInput) {
