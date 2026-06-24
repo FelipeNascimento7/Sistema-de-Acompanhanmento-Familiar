@@ -2273,6 +2273,11 @@
       overflow-wrap: anywhere;
     }
 
+    .home-search-result-member-match {
+      color: var(--text);
+      font-weight: 950;
+    }
+
 
     #add-family-screen.view-mode .option-manage-button,
     #add-family-screen.view-mode #add-family-member-row,
@@ -8716,21 +8721,41 @@
       title.textContent = family.identificacao?.nome || family.title || 'Família sem nome';
 
       const matchingMembers = Array.isArray(options.matchingMembers) ? options.matchingMembers : [];
+      const matchingMemberNames = matchingMembers
+        .map((member) => member.nome || member.apelido || member.parentesco || 'Sem nome')
+        .slice(0, 3)
+        .join(', ');
       const memberMatchText = matchingMembers.length > 0
-        ? `${matchingMembers.length === 1 ? 'Componente encontrado' : 'Componentes encontrados'}: ${matchingMembers
-          .map((member) => member.nome || member.apelido || member.parentesco || 'Sem nome')
-          .slice(0, 3)
-          .join(', ')}${matchingMembers.length > 3 ? ` +${matchingMembers.length - 3}` : ''}`
+        ? `${matchingMembers.length === 1 ? 'Componente encontrado' : 'Componentes encontrados'}: ${matchingMemberNames}${matchingMembers.length > 3 ? ` +${matchingMembers.length - 3}` : ''}`
         : '';
 
       const meta = document.createElement('div');
       meta.className = 'home-search-result-meta';
-      meta.textContent = [
+
+      const metaItems = [
         family.cadastro?.dataCadastro ? `Cadastro: ${formatDisplayDate(family.cadastro.dataCadastro)}` : '',
         family.identificacao?.apelido ? `Apelido: ${family.identificacao.apelido}` : '',
-        memberMatchText,
         `Integrantes: ${family.renda?.totalMembros || 0}`
-      ].filter(Boolean).join(' · ');
+      ].filter(Boolean);
+
+      if (memberMatchText) {
+        const memberMatch = document.createElement('strong');
+        memberMatch.className = 'home-search-result-member-match';
+        memberMatch.textContent = memberMatchText;
+        metaItems.splice(Math.min(2, metaItems.length), 0, memberMatch);
+      }
+
+      metaItems.forEach((item, index) => {
+        if (index > 0) {
+          meta.append(document.createTextNode(' · '));
+        }
+
+        if (typeof item === 'string') {
+          meta.append(document.createTextNode(item));
+        } else {
+          meta.append(item);
+        }
+      });
 
       card.addEventListener('click', () => openFamilyViewMode(family.id));
       card.append(title, meta);
