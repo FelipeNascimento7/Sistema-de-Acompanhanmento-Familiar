@@ -1329,6 +1329,34 @@
       gap: 0;
     }
 
+    .family-form-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .family-form-title-block {
+      min-width: 0;
+      display: grid;
+      gap: 6px;
+    }
+
+    .family-form-header-actions {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .family-form-header-row .edit-family-button,
+    .family-form-header-row #top-save-family-button {
+      flex: 0 0 auto;
+      align-self: center;
+      white-space: nowrap;
+    }
+
     .form-header {
       padding: 18px;
       border-bottom: 1px solid var(--line);
@@ -2107,6 +2135,11 @@
       text-align: right;
     }
 
+    #add-family-screen.view-mode .form-top-actions,
+    #add-family-screen.edit-mode .form-top-actions {
+      display: none !important;
+    }
+
     .form-actions {
       padding: 16px 18px 18px;
       border-top: 1px solid var(--line);
@@ -2658,6 +2691,15 @@
         padding-inline: 14px;
       }
 
+      .family-form-header-actions {
+        justify-content: flex-end;
+      }
+
+      .family-form-header-row .edit-family-button,
+      .family-form-header-row #top-save-family-button {
+        width: auto;
+      }
+
       .form-grid,
       .form-grid.two-columns {
         grid-template-columns: 1fr;
@@ -2983,13 +3025,19 @@
             <div class="form-panel">
           <form class="family-form" id="family-form" autocomplete="off">
             <div class="form-header">
-              <h2 id="add-family-title">FICHA FAMILIAR</h2>
-              <p>Preencha os dados de identificação, endereço, composição familiar e renda.</p>
+              <div class="family-form-header-row">
+                <div class="family-form-title-block">
+                  <h2 id="add-family-title">FICHA FAMILIAR</h2>
+                  <p>Preencha os dados de identificação, endereço, composição familiar e renda.</p>
+                </div>
+                <div class="family-form-header-actions" aria-label="Ações principais da ficha familiar">
+                  <button class="plain-button edit-family-button" id="edit-family-button" type="button" hidden>Editar</button>
+                  <button class="solid-button" id="top-save-family-button" type="submit" hidden>Salvar família</button>
+                </div>
+              </div>
             </div>
 
-            <div class="form-top-actions" aria-label="Ações e status da ficha familiar">
-              <button class="solid-button" id="top-save-family-button" type="submit" hidden>Salvar família</button>
-              <button class="plain-button edit-family-button" id="edit-family-button" type="button" hidden>Editar</button>
+            <div class="form-top-actions" aria-label="Status da ficha familiar">
               <span class="form-status" id="family-form-status" data-state="idle"></span>
             </div>
 
@@ -8708,6 +8756,7 @@
       const addFamilyScreen = document.querySelector('#add-family-screen');
       if (addFamilyScreen) {
         addFamilyScreen.classList.toggle('view-mode', isViewMode);
+        addFamilyScreen.classList.remove('edit-mode');
       }
       updateFamilyHeaderTitle();
 
@@ -8763,6 +8812,7 @@
       const addFamilyScreen = document.querySelector('#add-family-screen');
       if (addFamilyScreen) {
         addFamilyScreen.classList.remove('view-mode');
+        addFamilyScreen.classList.add('edit-mode');
       }
       updateFamilyHeaderTitle();
 
