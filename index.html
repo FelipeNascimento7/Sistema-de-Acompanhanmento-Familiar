@@ -1670,7 +1670,7 @@
 
     .resource-timeline-entry {
       display: grid;
-      grid-template-columns: minmax(120px, 0.7fr) minmax(160px, 1fr) minmax(180px, 1.25fr);
+      grid-template-columns: minmax(120px, 0.7fr) minmax(160px, 1fr) minmax(180px, 1.25fr) auto;
       gap: 12px;
       align-items: start;
       padding: 6px 0;
@@ -1704,6 +1704,20 @@
     .resource-timeline-detail {
       min-width: 0;
       overflow-wrap: anywhere;
+    }
+
+    .resource-timeline-actions {
+      display: flex;
+      justify-content: flex-end;
+      align-items: start;
+    }
+
+    .resource-timeline-edit-button {
+      min-height: 34px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      white-space: nowrap;
     }
 
     .resource-timeline-main {
@@ -1742,6 +1756,11 @@
 
       .resource-timeline-detail {
         grid-column: 2;
+      }
+
+      .resource-timeline-actions {
+        grid-column: 1 / -1;
+        justify-content: flex-end;
       }
     }
 
@@ -1885,6 +1904,27 @@
     .evolution-timeline-entry:last-child {
       border-bottom: 0;
       padding-bottom: 0;
+    }
+
+    .evolution-timeline-entry-header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: start;
+    }
+
+    .evolution-timeline-actions {
+      display: flex;
+      justify-content: flex-end;
+      align-items: start;
+    }
+
+    .evolution-timeline-edit-button {
+      min-height: 34px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      white-space: nowrap;
     }
 
     .evolution-timeline-text {
@@ -2069,6 +2109,14 @@
         grid-template-columns: 1fr;
         gap: 8px;
         padding-left: 24px;
+      }
+
+      .evolution-timeline-entry-header {
+        grid-template-columns: 1fr;
+      }
+
+      .evolution-timeline-actions {
+        justify-content: flex-end;
       }
     }
 
@@ -3277,7 +3325,7 @@
                     <tr>
                       <th>Tipo</th>
                       <th>Serviço/Item</th>
-                      <th>Descrição/Quantidade</th>
+                      <th>Descrição/Valor</th>
                       <th>Data</th>
                     </tr>
                   </thead>
@@ -3303,9 +3351,9 @@
                           <button class="option-manage-button" type="button" data-option-set="itensDoacao" data-option-target="resource-item" data-option-label="Item" aria-label="Editar opções de Item">⋯</button>
                         </div>
                       </td>
-                      <td data-label="Descrição/Quantidade">
+                      <td data-label="Descrição/Valor">
                         <textarea class="table-input" id="resource-description" name="descricao" rows="2" placeholder="Descrição do serviço" data-resource-kind="servico"></textarea>
-                        <input class="table-input" id="resource-quantity" name="quantidade" type="number" min="0" step="1" placeholder="Quantidade" data-resource-kind="doacao" hidden>
+                        <input class="table-input" id="resource-quantity" name="quantidade" type="number" min="0" step="1" placeholder="Valor numérico" data-resource-kind="doacao" hidden>
                       </td>
                       <td data-label="Data">
                         <input class="table-input" id="resource-date" name="data" type="date" data-date-input="true" autocomplete="off" required>
@@ -3319,6 +3367,7 @@
               </div>
               <div class="section-actions">
                 <button class="solid-button" type="submit">Salvar registro</button>
+                <button class="plain-button" id="cancel-resource-edit-button" type="button" hidden>Cancelar edição</button>
                 <span class="resource-status-line" id="resource-form-status" data-state="idle"></span>
               </div>
             </section>
@@ -3369,6 +3418,7 @@
               </div>
               <div class="section-actions">
                 <button class="solid-button" type="submit">Salvar evolução</button>
+                <button class="plain-button" id="cancel-evolution-edit-button" type="button" hidden>Cancelar edição</button>
                 <span class="resource-status-line" id="evolution-form-status" data-state="idle"></span>
               </div>
             </section>
@@ -3951,6 +4001,9 @@
     const appointmentFamilyFilter = document.querySelector('#appointment-family-filter');
     const appointmentList = document.querySelector('#appointment-list');
     const resourceForm = document.querySelector('#resource-form');
+    const resourceSectionTitle = document.querySelector('#resource-new-title');
+    const resourceSubmitButton = resourceForm?.querySelector('button[type="submit"]');
+    const cancelResourceEditButton = document.querySelector('#cancel-resource-edit-button');
     const resourceEntryBody = document.querySelector('#resource-entry-body');
     const addResourceLineButton = document.querySelector('#add-resource-line-button');
     const resourceBackFamilyButton = document.querySelector('#resource-back-family');
@@ -3964,6 +4017,9 @@
     const resourceFormStatus = document.querySelector('#resource-form-status');
     const resourceRecordsTimeline = document.querySelector('#resource-records-timeline');
     const evolutionForm = document.querySelector('#evolution-form');
+    const evolutionSectionTitle = document.querySelector('#evolution-new-title');
+    const evolutionSubmitButton = evolutionForm?.querySelector('button[type="submit"]');
+    const cancelEvolutionEditButton = document.querySelector('#cancel-evolution-edit-button');
     const evolutionBackFamilyButton = document.querySelector('#evolution-back-family');
     const evolutionFamilyLabel = document.querySelector('#evolution-family-label');
     const evolutionDateInput = document.querySelector('#evolution-date');
@@ -4556,6 +4612,8 @@
       });
 
       activeViewedFamilyId = null;
+      activeEditingResourceRecordId = null;
+      activeEditingEvolutionRecordId = null;
       pendingFamilyUpdate = null;
       pendingFamilyChanges = [];
       familyFormMode = 'create';
@@ -6130,6 +6188,8 @@
     let familyFormMode = 'create';
     let activeViewedFamilyId = null;
     let activeFamilyHistoryTab = 'form';
+    let activeEditingResourceRecordId = null;
+    let activeEditingEvolutionRecordId = null;
     let navigationHistory = [];
     let activeAppointmentMonth = getCurrentMonthValue();
     let pendingFamilyUpdate = null;
@@ -6789,7 +6849,7 @@
       itemCell.append(serviceCombo, donationCombo);
 
       const detailCell = document.createElement('td');
-      detailCell.dataset.label = 'Descrição/Quantidade';
+      detailCell.dataset.label = 'Descrição/Valor';
 
       const description = document.createElement('textarea');
       description.className = 'table-input';
@@ -6804,7 +6864,7 @@
       quantity.type = 'number';
       quantity.min = '0';
       quantity.step = '1';
-      quantity.placeholder = 'Quantidade';
+      quantity.placeholder = 'Valor numérico';
       quantity.dataset.resourceKind = 'doacao';
       quantity.hidden = true;
 
@@ -6892,6 +6952,61 @@
       getResourceLineRows().slice(1).forEach((row) => row.remove());
     }
 
+    function setResourceFormMode(mode = 'create') {
+      const isEditMode = mode === 'edit';
+      activeEditingResourceRecordId = isEditMode ? activeEditingResourceRecordId : null;
+
+      if (resourceSectionTitle) {
+        resourceSectionTitle.textContent = isEditMode ? 'Editar registro' : 'Novo registro';
+      }
+
+      if (resourceSubmitButton) {
+        resourceSubmitButton.textContent = isEditMode ? 'Salvar alterações' : 'Salvar registro';
+      }
+
+      if (cancelResourceEditButton) {
+        cancelResourceEditButton.hidden = !isEditMode;
+      }
+
+      if (addResourceLineButton) {
+        addResourceLineButton.hidden = isEditMode;
+      }
+    }
+
+    function fillResourceFormFromRecord(record) {
+      if (!record || !resourceForm) {
+        return;
+      }
+
+      resetResourceExtraLines();
+      resourceForm.reset();
+
+      if (resourceTypeSelect) {
+        resourceTypeSelect.value = record.type === 'doacao' ? 'doacao' : 'servico';
+      }
+
+      if (resourceDateInput) {
+        setDateInputValue(resourceDateInput, record.date || getTodayValue());
+      }
+
+      renderManagedOptionSelects();
+      updateResourceTypeFields();
+
+      if (record.type === 'doacao') {
+        setFieldValuePreservingOption(resourceItemSelect, record.item || '');
+        if (resourceQuantityInput) {
+          resourceQuantityInput.value = record.quantidade || '';
+        }
+      } else {
+        setFieldValuePreservingOption(resourceServiceSelect, record.servico || '');
+        if (resourceDescriptionInput) {
+          resourceDescriptionInput.value = record.descricao || '';
+        }
+      }
+
+      updateResourceTypeFields();
+    }
+
     function resetResourceForm() {
       if (!resourceForm) {
         return;
@@ -6913,10 +7028,11 @@
         resourceFormStatus.dataset.state = 'idle';
       }
 
+      setResourceFormMode('create');
       updateResourceTypeFields();
     }
 
-    function openFamilyResourceScreen() {
+    function openFamilyResourceScreen(options = {}) {
       const family = activeViewedFamilyId ? findFamilyById(activeViewedFamilyId) : null;
 
       if (!family) {
@@ -6929,7 +7045,23 @@
         resourceFamilyLabel.textContent = `Família: ${family.identificacao?.nome || family.title || 'Família sem nome'}`;
       }
 
+      const editRecordId = options && !(options instanceof Event) ? options.editRecordId : '';
+      const editRecord = editRecordId
+        ? (appState.collections.resourceRecords || []).find((record) => record.id === editRecordId && record.familyId === family.id)
+        : null;
+
       resetResourceForm();
+
+      if (editRecord) {
+        activeEditingResourceRecordId = editRecord.id;
+        setResourceFormMode('edit');
+        fillResourceFormFromRecord(editRecord);
+        if (resourceFormStatus) {
+          resourceFormStatus.textContent = 'Edite o registro selecionado e salve as alterações.';
+          resourceFormStatus.dataset.state = 'idle';
+        }
+      }
+
       renderResourceRecords();
       showScreen('family-resource-screen');
     }
@@ -7025,6 +7157,94 @@
       return '';
     }
 
+    function buildUpdatedResourceRecord(originalRecord, formRecord) {
+      const updatedAt = new Date().toISOString();
+      const updatedRecord = {
+        id: originalRecord.id,
+        familyId: formRecord.familyId || originalRecord.familyId || activeViewedFamilyId || '',
+        familyTitle: formRecord.familyTitle || originalRecord.familyTitle || '',
+        type: formRecord.type,
+        tipo: getResourceTypeLabel(formRecord.type),
+        date: formRecord.date,
+        createdAt: originalRecord.createdAt || formRecord.createdAt || updatedAt,
+        updatedAt,
+        lineIndex: originalRecord.lineIndex || formRecord.lineIndex || 1,
+        title: formRecord.title
+      };
+
+      if (formRecord.type === 'doacao') {
+        updatedRecord.item = formRecord.item || '';
+        updatedRecord.quantidade = formRecord.quantidade || '';
+      } else {
+        updatedRecord.servico = formRecord.servico || '';
+        updatedRecord.descricao = formRecord.descricao || '';
+      }
+
+      return updatedRecord;
+    }
+
+    function collectResourceRecordChanges(originalRecord, updatedRecord) {
+      const changes = [];
+
+      addChange(changes, 'Tipo', getResourceTypeLabel(originalRecord.type), getResourceTypeLabel(updatedRecord.type));
+      addChange(changes, 'Serviço', originalRecord.servico || '', updatedRecord.servico || '');
+      addChange(changes, 'Descrição', originalRecord.descricao || '', updatedRecord.descricao || '');
+      addChange(changes, 'Item', originalRecord.item || '', updatedRecord.item || '');
+      addChange(changes, 'Valor numérico', originalRecord.quantidade || '', updatedRecord.quantidade || '');
+      addChange(changes, 'Data', originalRecord.date || '', updatedRecord.date || '', 'date');
+
+      return changes;
+    }
+
+    function updateResourceTimelineEvent(record) {
+      const event = (appState.collections.timelineEvents || []).find((timelineEvent) => timelineEvent.resourceRecordId === record.id);
+
+      if (!event) {
+        return;
+      }
+
+      event.familyId = record.familyId;
+      event.familyTitle = record.familyTitle || '';
+      event.title = `Recurso recebido: ${record.title}`;
+      event.date = record.date;
+    }
+
+    function updateResourceRecordFromForm(filledRecords) {
+      const recordIndex = (appState.collections.resourceRecords || []).findIndex((record) => record.id === activeEditingResourceRecordId);
+
+      if (recordIndex < 0) {
+        resourceFormStatus.textContent = 'Não foi possível localizar o registro selecionado para edição.';
+        resourceFormStatus.dataset.state = 'error';
+        return false;
+      }
+
+      const originalRecord = appState.collections.resourceRecords[recordIndex];
+      const updatedRecord = buildUpdatedResourceRecord(originalRecord, filledRecords[0]);
+      const changes = collectResourceRecordChanges(originalRecord, updatedRecord);
+
+      appState.collections.resourceRecords[recordIndex] = updatedRecord;
+      updateResourceTimelineEvent(updatedRecord);
+
+      addAuditLog({
+        action: 'Editou recurso',
+        changeType: 'edit',
+        entityType: 'Registro de recursos',
+        entityId: updatedRecord.id,
+        familyId: updatedRecord.familyId,
+        familyTitle: updatedRecord.familyTitle || '',
+        title: `Recurso editado: ${updatedRecord.title}`,
+        changes
+      });
+
+      saveAppState();
+      resetResourceForm();
+      renderResourceRecords();
+      renderFamilyLinkedHistory();
+      resourceFormStatus.textContent = 'Registro de recurso atualizado com sucesso.';
+      resourceFormStatus.dataset.state = 'success';
+      return true;
+    }
+
     function saveResourceRecord(event) {
       event.preventDefault();
       const records = createResourceRecordsFromForm();
@@ -7034,6 +7254,11 @@
       if (validationMessage) {
         resourceFormStatus.textContent = validationMessage;
         resourceFormStatus.dataset.state = 'error';
+        return;
+      }
+
+      if (activeEditingResourceRecordId) {
+        updateResourceRecordFromForm(filledRecords);
         return;
       }
 
@@ -7067,6 +7292,7 @@
       saveAppState();
       resetResourceForm();
       renderResourceRecords();
+      renderFamilyLinkedHistory();
       resourceFormStatus.textContent = filledRecords.length === 1
         ? 'Recurso recebido registrado com sucesso.'
         : `${filledRecords.length} recursos recebidos registrados com sucesso.`;
@@ -7135,10 +7361,21 @@
           const detail = document.createElement('div');
           detail.className = 'resource-timeline-detail';
           detail.textContent = record.type === 'doacao'
-            ? `Quantidade: ${record.quantidade || 'Não informada'}`
+            ? (record.quantidade || 'Não informada')
             : (record.descricao || 'Sem descrição');
 
-          entry.append(kind, main, detail);
+          const actions = document.createElement('div');
+          actions.className = 'resource-timeline-actions';
+
+          const editButton = document.createElement('button');
+          editButton.className = 'table-action-button resource-timeline-edit-button';
+          editButton.type = 'button';
+          editButton.textContent = 'Editar';
+          editButton.setAttribute('aria-label', `Editar registro de recurso de ${record.type === 'doacao' ? (record.item || 'item não informado') : (record.servico || 'serviço não informado')}`);
+          editButton.addEventListener('click', () => openFamilyResourceScreen({ editRecordId: record.id }));
+
+          actions.append(editButton);
+          entry.append(kind, main, detail, actions);
           entries.append(entry);
         });
 
@@ -7148,7 +7385,40 @@
     }
 
 
-    function openFamilyEvolutionScreen() {
+    function setEvolutionFormMode(mode = 'create') {
+      const isEditMode = mode === 'edit';
+      activeEditingEvolutionRecordId = isEditMode ? activeEditingEvolutionRecordId : null;
+
+      if (evolutionSectionTitle) {
+        evolutionSectionTitle.textContent = isEditMode ? 'Editar evolução' : 'Novo registro de evolução';
+      }
+
+      if (evolutionSubmitButton) {
+        evolutionSubmitButton.textContent = isEditMode ? 'Salvar alterações' : 'Salvar evolução';
+      }
+
+      if (cancelEvolutionEditButton) {
+        cancelEvolutionEditButton.hidden = !isEditMode;
+      }
+    }
+
+    function fillEvolutionFormFromRecord(record) {
+      if (!record || !evolutionForm) {
+        return;
+      }
+
+      if (evolutionDateInput) {
+        setDateInputValue(evolutionDateInput, record.date || getTodayValue());
+      }
+
+      if (evolutionEditor) {
+        evolutionEditor.innerHTML = getEvolutionRecordHtml(record);
+      }
+
+      updateEvolutionToolbarState();
+    }
+
+    function openFamilyEvolutionScreen(options = {}) {
       const family = activeViewedFamilyId ? findFamilyById(activeViewedFamilyId) : null;
 
       if (!family) {
@@ -7161,7 +7431,23 @@
         evolutionFamilyLabel.textContent = `Família: ${family.identificacao?.nome || family.title || 'Família sem nome'}`;
       }
 
+      const editRecordId = options && !(options instanceof Event) ? options.editRecordId : '';
+      const editRecord = editRecordId
+        ? (appState.collections.evolutionRecords || []).find((record) => record.id === editRecordId && record.familyId === family.id)
+        : null;
+
       resetEvolutionForm();
+
+      if (editRecord) {
+        activeEditingEvolutionRecordId = editRecord.id;
+        setEvolutionFormMode('edit');
+        fillEvolutionFormFromRecord(editRecord);
+        if (evolutionFormStatus) {
+          evolutionFormStatus.textContent = 'Edite a evolução selecionada e salve as alterações.';
+          evolutionFormStatus.dataset.state = 'idle';
+        }
+      }
+
       renderEvolutionRecords();
       showScreen('family-evolution-screen');
     }
@@ -7184,6 +7470,7 @@
         evolutionFormStatus.dataset.state = 'idle';
       }
 
+      setEvolutionFormMode('create');
       updateEvolutionToolbarState();
     }
 
@@ -7284,6 +7571,81 @@
       updateEvolutionToolbarState();
     }
 
+    function buildUpdatedEvolutionRecord(originalRecord, formData) {
+      const updatedAt = new Date().toISOString();
+
+      return {
+        ...originalRecord,
+        familyId: originalRecord.familyId || activeViewedFamilyId || '',
+        familyTitle: formData.familyTitle || originalRecord.familyTitle || '',
+        type: 'evolucao',
+        title: 'Evolução',
+        date: formData.date,
+        contentHtml: formData.contentHtml,
+        contentText: formData.contentText,
+        createdAt: originalRecord.createdAt || updatedAt,
+        updatedAt
+      };
+    }
+
+    function collectEvolutionRecordChanges(originalRecord, updatedRecord) {
+      const changes = [];
+
+      addChange(changes, 'Data da evolução', originalRecord.date || '', updatedRecord.date || '', 'date');
+      addChange(changes, 'Registro', originalRecord.contentText || '', updatedRecord.contentText || '');
+
+      return changes;
+    }
+
+    function updateEvolutionTimelineEvent(record) {
+      const event = (appState.collections.timelineEvents || []).find((timelineEvent) => timelineEvent.evolutionRecordId === record.id);
+
+      if (!event) {
+        return;
+      }
+
+      event.familyId = record.familyId;
+      event.familyTitle = record.familyTitle || '';
+      event.title = `Evolução registrada: ${record.familyTitle || 'família sem nome'}`;
+      event.date = record.date;
+    }
+
+    function updateEvolutionRecordFromForm(formData) {
+      const recordIndex = (appState.collections.evolutionRecords || []).findIndex((record) => record.id === activeEditingEvolutionRecordId);
+
+      if (recordIndex < 0) {
+        evolutionFormStatus.textContent = 'Não foi possível localizar a evolução selecionada para edição.';
+        evolutionFormStatus.dataset.state = 'error';
+        return false;
+      }
+
+      const originalRecord = appState.collections.evolutionRecords[recordIndex];
+      const updatedRecord = buildUpdatedEvolutionRecord(originalRecord, formData);
+      const changes = collectEvolutionRecordChanges(originalRecord, updatedRecord);
+
+      appState.collections.evolutionRecords[recordIndex] = updatedRecord;
+      updateEvolutionTimelineEvent(updatedRecord);
+
+      addAuditLog({
+        action: 'Editou evolução',
+        changeType: 'edit',
+        entityType: 'Evolução',
+        entityId: updatedRecord.id,
+        familyId: updatedRecord.familyId,
+        familyTitle: updatedRecord.familyTitle || '',
+        title: `Evolução editada: ${updatedRecord.familyTitle || 'família sem nome'}`,
+        changes
+      });
+
+      saveAppState();
+      resetEvolutionForm();
+      renderEvolutionRecords();
+      renderFamilyLinkedHistory();
+      evolutionFormStatus.textContent = 'Evolução atualizada com sucesso.';
+      evolutionFormStatus.dataset.state = 'success';
+      return true;
+    }
+
     function saveEvolutionRecord(event) {
       event.preventDefault();
       const family = activeViewedFamilyId ? findFamilyById(activeViewedFamilyId) : null;
@@ -7308,6 +7670,16 @@
         evolutionFormStatus.textContent = 'Escreva o texto da evolução antes de salvar.';
         evolutionFormStatus.dataset.state = 'error';
         evolutionEditor?.focus();
+        return;
+      }
+
+      if (activeEditingEvolutionRecordId) {
+        updateEvolutionRecordFromForm({
+          familyTitle: family.identificacao?.nome || family.title || '',
+          date,
+          contentHtml,
+          contentText
+        });
         return;
       }
 
@@ -7352,6 +7724,7 @@
       saveAppState();
       resetEvolutionForm();
       renderEvolutionRecords();
+      renderFamilyLinkedHistory();
       evolutionFormStatus.textContent = 'Evolução registrada com sucesso.';
       evolutionFormStatus.dataset.state = 'success';
     }
@@ -7409,7 +7782,22 @@
           textBlock.className = 'evolution-timeline-text';
           textBlock.innerHTML = getEvolutionRecordHtml(record);
 
-          entry.append(textBlock);
+          const actions = document.createElement('div');
+          actions.className = 'evolution-timeline-actions';
+
+          const editButton = document.createElement('button');
+          editButton.className = 'table-action-button evolution-timeline-edit-button';
+          editButton.type = 'button';
+          editButton.textContent = 'Editar';
+          editButton.setAttribute('aria-label', `Editar evolução de ${record.date ? formatDisplayDate(record.date) : 'data não informada'}`);
+          editButton.addEventListener('click', () => openFamilyEvolutionScreen({ editRecordId: record.id }));
+
+          const entryHeader = document.createElement('div');
+          entryHeader.className = 'evolution-timeline-entry-header';
+          actions.append(editButton);
+          entryHeader.append(textBlock, actions);
+
+          entry.append(entryHeader);
           entries.append(entry);
         });
 
@@ -7488,10 +7876,21 @@
           const detail = document.createElement('div');
           detail.className = 'resource-timeline-detail';
           detail.textContent = record.type === 'doacao'
-            ? `Quantidade: ${record.quantidade || 'Não informada'}`
+            ? (record.quantidade || 'Não informada')
             : (record.descricao || 'Sem descrição');
 
-          entry.append(kind, main, detail);
+          const actions = document.createElement('div');
+          actions.className = 'resource-timeline-actions';
+
+          const editButton = document.createElement('button');
+          editButton.className = 'table-action-button resource-timeline-edit-button';
+          editButton.type = 'button';
+          editButton.textContent = 'Editar';
+          editButton.setAttribute('aria-label', `Editar registro de recurso de ${record.type === 'doacao' ? (record.item || 'item não informado') : (record.servico || 'serviço não informado')}`);
+          editButton.addEventListener('click', () => openFamilyResourceScreen({ editRecordId: record.id }));
+
+          actions.append(editButton);
+          entry.append(kind, main, detail, actions);
           entries.append(entry);
         });
 
@@ -7557,7 +7956,22 @@
           textBlock.className = 'evolution-timeline-text';
           textBlock.innerHTML = getEvolutionRecordHtml(record);
 
-          entry.append(textBlock);
+          const actions = document.createElement('div');
+          actions.className = 'evolution-timeline-actions';
+
+          const editButton = document.createElement('button');
+          editButton.className = 'table-action-button evolution-timeline-edit-button';
+          editButton.type = 'button';
+          editButton.textContent = 'Editar';
+          editButton.setAttribute('aria-label', `Editar evolução de ${record.date ? formatDisplayDate(record.date) : 'data não informada'}`);
+          editButton.addEventListener('click', () => openFamilyEvolutionScreen({ editRecordId: record.id }));
+
+          const entryHeader = document.createElement('div');
+          entryHeader.className = 'evolution-timeline-entry-header';
+          actions.append(editButton);
+          entryHeader.append(textBlock, actions);
+
+          entry.append(entryHeader);
           entries.append(entry);
         });
 
@@ -8225,7 +8639,7 @@
             { label: 'Família', value: record.familyTitle || '' },
             { label: 'Tipo', value: getResourceTypeLabel(record.type) },
             { label: 'Item', value: record.item || '' },
-            { label: 'Quantidade', value: record.quantidade || '' },
+            { label: 'Valor numérico', value: record.quantidade || '' },
             { label: 'Data', value: record.date ? formatDisplayDate(record.date) : '' }
           ]
         : [
@@ -9501,10 +9915,12 @@
       resourceForm?.addEventListener('submit', saveResourceRecord);
       resourceTypeSelect?.addEventListener('change', updateResourceTypeFields);
       addResourceLineButton?.addEventListener('click', addResourceLine);
+      cancelResourceEditButton?.addEventListener('click', resetResourceForm);
       resourceBackFamilyButton?.addEventListener('click', () => {
         goBackToPreviousScreen('home-screen', createFamilyFallbackNavigationState('resources'));
       });
       evolutionForm?.addEventListener('submit', saveEvolutionRecord);
+      cancelEvolutionEditButton?.addEventListener('click', resetEvolutionForm);
       evolutionBackFamilyButton?.addEventListener('click', () => {
         goBackToPreviousScreen('home-screen', createFamilyFallbackNavigationState('evolution'));
       });
