@@ -1892,20 +1892,72 @@
       margin: 8px 0;
     }
 
+    .family-workspace {
+      display: grid;
+      gap: 0;
+    }
+
+    .family-screen-tabs {
+      margin: 0 0 -1px;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .family-screen-tabs .family-history-tab {
+      border-bottom: 1px solid var(--line);
+    }
+
     .family-linked-history-panel {
-      margin-top: 14px;
+      border: 1px solid var(--line);
+      border-top: 0;
+      border-radius: 0 0 calc(var(--radius) + 4px) calc(var(--radius) + 4px);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      overflow: hidden;
     }
 
     .family-linked-history-panel[hidden] {
       display: none !important;
     }
 
+    .family-history-tab-panel[data-family-history-panel="form"] {
+      padding: 0;
+    }
+
+    .family-history-tab-panel[data-family-history-panel="form"][hidden] {
+      display: none !important;
+    }
+
+    .family-history-tab-panel[data-family-history-panel="form"] .form-panel {
+      border-radius: 0 0 calc(var(--radius) + 4px) calc(var(--radius) + 4px);
+    }
+
+    .family-history-toolbar {
+      padding: 14px 16px 0;
+    }
+
+    .family-tab-actions {
+      display: flex;
+      justify-content: flex-start;
+      gap: 8px;
+      padding: 0;
+    }
+
     .family-history-controls {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-columns: auto minmax(0, 1fr) auto;
       gap: 10px;
       align-items: end;
+      width: 100%;
+    }
+
+    .family-history-controls .family-tab-actions {
+      justify-self: start;
+    }
+
+    .family-history-controls .family-history-filter-field {
       width: min(420px, 100%);
+      justify-self: end;
     }
 
     .family-history-filter-field {
@@ -2582,6 +2634,23 @@
         box-shadow: none;
       }
 
+      .family-linked-history-panel {
+        box-shadow: none;
+      }
+
+      .family-screen-tabs {
+        padding-inline: 12px;
+        overflow-x: auto;
+      }
+
+      .family-history-toolbar,
+      .family-history-controls,
+      .family-tab-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        justify-content: stretch;
+      }
+
       .form-header,
       .form-section,
       .form-actions,
@@ -2903,7 +2972,15 @@
           <button class="plain-button" type="button" data-screen="home-screen">Voltar</button>
         </div>
 
-        <div class="form-panel">
+        <div class="family-workspace" id="family-workspace">
+          <div class="family-history-tabs family-screen-tabs" id="family-screen-tabs" role="tablist" aria-label="Abas da família">
+            <button class="family-history-tab active" id="family-history-tab-form" type="button" role="tab" aria-selected="true" aria-controls="family-history-panel-form" data-family-history-tab="form">Ficha familiar</button>
+            <button class="family-history-tab" id="family-history-tab-resources" type="button" role="tab" aria-selected="false" aria-controls="family-history-panel-resources" data-family-history-tab="resources" hidden>Registro de recursos</button>
+            <button class="family-history-tab" id="family-history-tab-evolution" type="button" role="tab" aria-selected="false" aria-controls="family-history-panel-evolution" data-family-history-tab="evolution" hidden>Evolução</button>
+          </div>
+
+          <div class="family-history-tab-panel" id="family-history-panel-form" role="tabpanel" aria-labelledby="family-history-tab-form" data-family-history-panel="form">
+            <div class="form-panel">
           <form class="family-form" id="family-form" autocomplete="off">
             <div class="form-header">
               <h2 id="add-family-title">FICHA FAMILIAR</h2>
@@ -2911,8 +2988,6 @@
             </div>
 
             <div class="form-top-actions" aria-label="Ações e status da ficha familiar">
-              <button class="solid-button" id="register-resource-button" type="button" hidden>Registro de recursos</button>
-              <button class="solid-button" id="evolution-button" type="button" hidden>Evolução</button>
               <button class="solid-button" id="top-save-family-button" type="submit" hidden>Salvar família</button>
               <button class="plain-button edit-family-button" id="edit-family-button" type="button" hidden>Editar</button>
               <span class="form-status" id="family-form-status" data-state="idle"></span>
@@ -3103,36 +3178,36 @@
           </form>
         </div>
 
-        <div class="panel family-linked-history-panel" id="family-linked-history-panel" hidden>
-          <div class="panel-header">
-            <div>
-              <h2 class="panel-title">Histórico</h2>
-              <p class="panel-description">Visualize os registros de recursos e as evoluções vinculadas a esta família.</p>
-            </div>
-            <div class="family-history-controls">
-              <div class="family-history-filter-field">
-                <label for="family-history-date-filter">Filtrar por data</label>
-                <input id="family-history-date-filter" type="date" data-date-input="true" autocomplete="off" aria-label="Filtrar histórico por data">
+          </div>
+
+          <div class="family-linked-history-panel" id="family-linked-history-panel" hidden>
+            <div class="family-history-toolbar">
+              <div class="family-history-controls">
+                <div class="family-tab-actions">
+                  <button class="solid-button" id="register-resource-button" type="button" hidden>Novo registro de recursos</button>
+                  <button class="solid-button" id="evolution-button" type="button" hidden>Nova evolução</button>
+                </div>
+                <div class="family-history-filter-field">
+                  <label for="family-history-date-filter">Filtrar por data</label>
+                  <input id="family-history-date-filter" type="date" data-date-input="true" autocomplete="off" aria-label="Filtrar registros da família por data">
+                </div>
+                <button class="family-history-filter-clear" id="family-history-date-clear" type="button">Limpar</button>
               </div>
-              <button class="family-history-filter-clear" id="family-history-date-clear" type="button">Limpar</button>
+            </div>
+
+            <div class="family-history-tab-panel" id="family-history-panel-resources" role="tabpanel" aria-labelledby="family-history-tab-resources" data-family-history-panel="resources" hidden>
+              <div class="resource-timeline" id="family-inline-resource-timeline" aria-label="Histórico do registro de recursos da família">
+                <div class="empty-note resource-timeline-empty">Nenhum recurso registrado.</div>
+              </div>
+            </div>
+
+            <div class="family-history-tab-panel" id="family-history-panel-evolution" role="tabpanel" aria-labelledby="family-history-tab-evolution" data-family-history-panel="evolution" hidden>
+              <div class="evolution-timeline" id="family-inline-evolution-timeline" aria-label="Histórico de evolução da família">
+                <div class="empty-note evolution-timeline-empty">Nenhuma evolução registrada.</div>
+              </div>
             </div>
           </div>
-          <div class="family-history-tabs" role="tablist" aria-label="Históricos da família">
-            <button class="family-history-tab active" id="family-history-tab-resources" type="button" role="tab" aria-selected="true" aria-controls="family-history-panel-resources" data-family-history-tab="resources">Registro de recursos</button>
-            <button class="family-history-tab" id="family-history-tab-evolution" type="button" role="tab" aria-selected="false" aria-controls="family-history-panel-evolution" data-family-history-tab="evolution">Evolução</button>
-          </div>
-          <div class="family-history-tab-panel" id="family-history-panel-resources" role="tabpanel" aria-labelledby="family-history-tab-resources" data-family-history-panel="resources">
-            <div class="resource-timeline" id="family-inline-resource-timeline" aria-label="Histórico do registro de recursos da família">
-              <div class="empty-note resource-timeline-empty">Nenhum recurso registrado.</div>
-            </div>
-          </div>
-          <div class="family-history-tab-panel" id="family-history-panel-evolution" role="tabpanel" aria-labelledby="family-history-tab-evolution" data-family-history-panel="evolution" hidden>
-            <div class="evolution-timeline" id="family-inline-evolution-timeline" aria-label="Histórico de evolução da família">
-              <div class="empty-note evolution-timeline-empty">Nenhuma evolução registrada.</div>
-            </div>
-          </div>
-        </div>
-      </section>
+        </div>      </section>
 
       <section class="screen" id="family-resource-screen" data-title="Registro de recursos" aria-labelledby="family-resource-title">
         <div class="back-row">
@@ -3784,6 +3859,7 @@
     const reportsResults = document.querySelector('#reports-results');
     const timelineList = document.querySelector('#timeline-list');
     const familyForm = document.querySelector('#family-form');
+    const addFamilyTitle = document.querySelector('#add-family-title');
     const familyDataCadastroInput = document.querySelector('#family-data-cadastro');
     const familyResponsavelCadastroInput = document.querySelector('#family-responsavel-cadastro');
     const familyBirthInput = document.querySelector('#family-data-nascimento');
@@ -5242,7 +5318,8 @@
 
     function getScreenTitle(screen) {
       if (screen?.id === 'add-family-screen' && familyFormMode !== 'create') {
-        return 'Ficha familiar';
+        const family = activeViewedFamilyId ? findFamilyById(activeViewedFamilyId) : null;
+        return getFamilyRepresentativeName(family);
       }
 
       return screen?.dataset.title || 'Tela';
@@ -5835,7 +5912,7 @@
     let activeMemberRow = null;
     let familyFormMode = 'create';
     let activeViewedFamilyId = null;
-    let activeFamilyHistoryTab = 'resources';
+    let activeFamilyHistoryTab = 'form';
     let activeAppointmentMonth = getCurrentMonthValue();
     let pendingFamilyUpdate = null;
     let pendingFamilyChanges = [];
@@ -7248,10 +7325,16 @@
     }
 
     function setFamilyHistoryTab(tabKey) {
-      activeFamilyHistoryTab = tabKey === 'evolution' ? 'evolution' : 'resources';
+      const canShowLinkedTabs = familyFormMode === 'view' && Boolean(activeViewedFamilyId);
+      const requestedTab = ['form', 'resources', 'evolution'].includes(tabKey) ? tabKey : 'form';
+      activeFamilyHistoryTab = canShowLinkedTabs || requestedTab === 'form' ? requestedTab : 'form';
 
       familyHistoryTabButtons.forEach((button) => {
-        const isActive = button.dataset.familyHistoryTab === activeFamilyHistoryTab;
+        const tab = button.dataset.familyHistoryTab;
+        const isLinkedTab = tab === 'resources' || tab === 'evolution';
+        const isActive = tab === activeFamilyHistoryTab;
+
+        button.hidden = isLinkedTab && !canShowLinkedTabs;
         button.classList.toggle('active', isActive);
         button.setAttribute('aria-selected', isActive ? 'true' : 'false');
         button.tabIndex = isActive ? 0 : -1;
@@ -7260,16 +7343,26 @@
       familyHistoryTabPanels.forEach((panel) => {
         panel.hidden = panel.dataset.familyHistoryPanel !== activeFamilyHistoryTab;
       });
+
+      if (familyLinkedHistoryPanel) {
+        familyLinkedHistoryPanel.hidden = !canShowLinkedTabs || activeFamilyHistoryTab === 'form';
+      }
+
+      if (registerResourceButton) {
+        registerResourceButton.hidden = !canShowLinkedTabs || activeFamilyHistoryTab !== 'resources';
+      }
+
+      if (evolutionButton) {
+        evolutionButton.hidden = !canShowLinkedTabs || activeFamilyHistoryTab !== 'evolution';
+      }
     }
 
     function renderFamilyLinkedHistory() {
-      const shouldShow = familyFormMode === 'view' && Boolean(activeViewedFamilyId);
+      const shouldShowLinkedTabs = familyFormMode === 'view' && Boolean(activeViewedFamilyId);
 
-      if (familyLinkedHistoryPanel) {
-        familyLinkedHistoryPanel.hidden = !shouldShow;
-      }
-
-      if (!shouldShow) {
+      if (!shouldShowLinkedTabs) {
+        activeFamilyHistoryTab = 'form';
+        setFamilyHistoryTab('form');
         return;
       }
 
@@ -8403,6 +8496,7 @@
       saveAppState();
       renderApp();
       activeViewedFamilyId = family.id;
+      activeFamilyHistoryTab = 'form';
       setFamilyViewMode(false);
       fillFamilyFormFromRecord(family);
       setFamilyViewMode(true);
@@ -8416,13 +8510,33 @@
       return (appState.collections.families || []).find((family) => family.id === familyId) || null;
     }
 
+    function updateFamilyHeaderTitle() {
+      const addFamilyScreen = document.querySelector('#add-family-screen');
+      const isExistingFamilyScreen = familyFormMode !== 'create' && Boolean(activeViewedFamilyId);
+      const family = isExistingFamilyScreen ? findFamilyById(activeViewedFamilyId) : null;
+      const title = isExistingFamilyScreen ? getFamilyRepresentativeName(family) : 'FICHA FAMILIAR';
+
+      if (addFamilyTitle) {
+        addFamilyTitle.textContent = title;
+      }
+
+      if (addFamilyScreen) {
+        addFamilyScreen.dataset.title = isExistingFamilyScreen ? title : 'Adicionar família';
+      }
+
+      const activeScreen = document.querySelector('.screen.active');
+      if (activeScreen?.id === 'add-family-screen') {
+        screenLabel.textContent = getScreenTitle(activeScreen);
+      }
+    }
+
     function setFamilyViewMode(isViewMode) {
       familyFormMode = isViewMode ? 'view' : 'create';
       const addFamilyScreen = document.querySelector('#add-family-screen');
       if (addFamilyScreen) {
-        addFamilyScreen.dataset.title = isViewMode ? 'Ficha familiar' : 'Adicionar família';
         addFamilyScreen.classList.toggle('view-mode', isViewMode);
       }
+      updateFamilyHeaderTitle();
 
       familyForm.querySelectorAll('input, select, textarea').forEach((field) => {
         field.disabled = isViewMode;
@@ -8467,11 +8581,7 @@
       }
 
       renderFamilyLinkedHistory();
-
-      const activeScreen = document.querySelector('.screen.active');
-      if (activeScreen?.id === 'add-family-screen') {
-        screenLabel.textContent = getScreenTitle(activeScreen);
-      }
+      updateFamilyHeaderTitle();
     }
 
 
@@ -8479,9 +8589,9 @@
       familyFormMode = 'edit';
       const addFamilyScreen = document.querySelector('#add-family-screen');
       if (addFamilyScreen) {
-        addFamilyScreen.dataset.title = 'Ficha familiar';
         addFamilyScreen.classList.remove('view-mode');
       }
+      updateFamilyHeaderTitle();
 
       familyForm.querySelectorAll('input, select, textarea').forEach((field) => {
         field.disabled = false;
@@ -8526,14 +8636,9 @@
         evolutionButton.hidden = true;
       }
 
-      if (familyLinkedHistoryPanel) {
-        familyLinkedHistoryPanel.hidden = true;
-      }
+      setFamilyHistoryTab('form');
 
-      const activeScreen = document.querySelector('.screen.active');
-      if (activeScreen?.id === 'add-family-screen') {
-        screenLabel.textContent = getScreenTitle(activeScreen);
-      }
+      updateFamilyHeaderTitle();
     }
 
     function setFieldValueByName(name, value) {
