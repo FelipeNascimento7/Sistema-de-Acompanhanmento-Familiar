@@ -729,6 +729,14 @@
       color: var(--text-main);
     }
 
+    .appointment-edit-button {
+      min-height: 34px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      white-space: nowrap;
+    }
+
     @media (max-width: 760px) {
       .appointment-card {
         grid-template-columns: 1fr;
@@ -2092,6 +2100,14 @@
       color: var(--text);
     }
 
+    .record-edit-tabs[hidden] {
+      display: none !important;
+    }
+
+    .record-edit-tabs .family-history-tab {
+      cursor: default;
+    }
+
     .family-history-tab-panel {
       padding: 14px 16px 16px;
     }
@@ -2566,6 +2582,18 @@
 
     .modal-backdrop.visible {
       display: flex;
+    }
+
+    .record-edit-modal {
+      z-index: 150;
+    }
+
+    #option-manager-modal {
+      z-index: 260;
+    }
+
+    .edit-resource-option-actions {
+      justify-content: flex-start;
     }
 
     .modal-dialog {
@@ -3067,6 +3095,7 @@
             <button class="family-history-tab active" id="family-history-tab-form" type="button" role="tab" aria-selected="true" aria-controls="family-history-panel-form" data-family-history-tab="form">Ficha familiar</button>
             <button class="family-history-tab" id="family-history-tab-resources" type="button" role="tab" aria-selected="false" aria-controls="family-history-panel-resources" data-family-history-tab="resources" hidden>Registro de recursos</button>
             <button class="family-history-tab" id="family-history-tab-evolution" type="button" role="tab" aria-selected="false" aria-controls="family-history-panel-evolution" data-family-history-tab="evolution" hidden>Evolução</button>
+            <button class="family-history-tab" id="family-history-tab-appointments" type="button" role="tab" aria-selected="false" aria-controls="family-history-panel-appointments" data-family-history-tab="appointments" hidden>Agendamento</button>
           </div>
 
           <div class="family-history-tab-panel" id="family-history-panel-form" role="tabpanel" aria-labelledby="family-history-tab-form" data-family-history-panel="form">
@@ -3302,141 +3331,14 @@
                 <div class="empty-note evolution-timeline-empty">Nenhuma evolução registrada.</div>
               </div>
             </div>
+
+            <div class="family-history-tab-panel" id="family-history-panel-appointments" role="tabpanel" aria-labelledby="family-history-tab-appointments" data-family-history-panel="appointments" hidden>
+              <div class="appointment-list family-inline-appointment-list" id="family-inline-appointment-list" aria-label="Agendamentos da família">
+                <div class="empty-note">Nenhum agendamento registrado.</div>
+              </div>
+            </div>
           </div>
         </div>      </section>
-
-      <section class="screen" id="family-resource-screen" data-title="Registro de recursos" aria-labelledby="family-resource-title">
-        <div class="back-row">
-          <button class="plain-button" id="resource-back-family" type="button">Voltar para ficha</button>
-        </div>
-
-        <div class="form-panel">
-          <form class="family-form" id="resource-form" autocomplete="off">
-            <div class="form-header">
-              <h2 id="family-resource-title">Registro de recursos</h2>
-              <p id="resource-family-label">Selecione uma família para registrar o recurso recebido.</p>
-            </div>
-
-            <section class="form-section" aria-labelledby="resource-new-title">
-              <h3 class="section-title" id="resource-new-title">Novo registro</h3>
-              <div class="form-table-wrap">
-                <table class="form-table resource-entry-table" aria-label="Registro de recursos">
-                  <thead>
-                    <tr>
-                      <th>Tipo</th>
-                      <th>Serviço/Item</th>
-                      <th>Descrição/Valor</th>
-                      <th>Data</th>
-                    </tr>
-                  </thead>
-                  <tbody id="resource-entry-body">
-                    <tr data-resource-line-row="true">
-                      <td data-label="Tipo">
-                        <select class="table-input" id="resource-type" name="tipo" required>
-                          <option value="servico">Serviço acessado</option>
-                          <option value="doacao">Doação</option>
-                        </select>
-                      </td>
-                      <td data-label="Serviço/Item">
-                        <div class="table-option-combo" data-resource-kind="servico">
-                          <select class="table-input" id="resource-service" name="servico" data-option-select="servicosAcessados">
-                            <option value="">Selecionar</option>
-                          </select>
-                          <button class="option-manage-button" type="button" data-option-set="servicosAcessados" data-option-target="resource-service" data-option-label="Serviço" aria-label="Editar opções de Serviço">⋯</button>
-                        </div>
-                        <div class="table-option-combo" data-resource-kind="doacao" hidden>
-                          <select class="table-input" id="resource-item" name="item" data-option-select="itensDoacao">
-                            <option value="">Selecionar</option>
-                          </select>
-                          <button class="option-manage-button" type="button" data-option-set="itensDoacao" data-option-target="resource-item" data-option-label="Item" aria-label="Editar opções de Item">⋯</button>
-                        </div>
-                      </td>
-                      <td data-label="Descrição/Valor">
-                        <textarea class="table-input" id="resource-description" name="descricao" rows="2" placeholder="Descrição do serviço" data-resource-kind="servico"></textarea>
-                        <input class="table-input" id="resource-quantity" name="quantidade" type="number" min="0" step="1" placeholder="Valor numérico" data-resource-kind="doacao" hidden>
-                      </td>
-                      <td data-label="Data">
-                        <input class="table-input" id="resource-date" name="data" type="date" data-date-input="true" autocomplete="off" required>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-                <div class="resource-line-actions">
-                  <button class="resource-line-add-button" id="add-resource-line-button" type="button">+ Adicionar serviço</button>
-                </div>
-              </div>
-              <div class="section-actions">
-                <button class="solid-button" type="submit">Salvar registro</button>
-                <button class="plain-button" id="cancel-resource-edit-button" type="button" hidden>Cancelar edição</button>
-                <span class="resource-status-line" id="resource-form-status" data-state="idle"></span>
-              </div>
-            </section>
-          </form>
-        </div>
-
-        <div class="panel" style="margin-top: 14px;">
-          <div class="panel-header">
-            <div>
-              <h2 class="panel-title">Histórico</h2>
-              <p class="panel-description">Histórico de serviços acessados e doações recebidas por esta família.</p>
-            </div>
-          </div>
-          <div class="resource-timeline" id="resource-records-timeline" aria-label="Linha do tempo de recursos recebidos registrados">
-            <div class="empty-note resource-timeline-empty">Nenhum recurso recebido registrado.</div>
-          </div>
-        </div>
-      </section>
-
-
-      <section class="screen" id="family-evolution-screen" data-title="Evolução" aria-labelledby="family-evolution-title">
-        <div class="back-row">
-          <button class="plain-button" id="evolution-back-family" type="button">Voltar para ficha</button>
-        </div>
-
-        <div class="form-panel">
-          <form class="family-form" id="evolution-form" autocomplete="off">
-            <div class="form-header">
-              <h2 id="family-evolution-title">Evolução</h2>
-              <p id="evolution-family-label">Selecione uma família para registrar uma evolução.</p>
-            </div>
-
-            <section class="form-section" aria-labelledby="evolution-new-title">
-              <h3 class="section-title" id="evolution-new-title">Novo registro de evolução</h3>
-              <div class="form-grid two-columns">
-                <div class="field">
-                  <label for="evolution-date">Data do registro</label>
-                  <input id="evolution-date" name="data" type="date" data-date-input="true" autocomplete="off" required>
-                </div>
-              </div>
-              <div class="evolution-editor-panel">
-                <div class="evolution-toolbar" aria-label="Formatação do texto da evolução">
-                  <button class="evolution-format-button" type="button" data-evolution-command="bold" aria-pressed="false" title="Negrito"><strong>B</strong></button>
-                  <button class="evolution-format-button" type="button" data-evolution-command="italic" aria-pressed="false" title="Itálico"><em>I</em></button>
-                  <button class="evolution-format-button" type="button" data-evolution-command="underline" aria-pressed="false" title="Sublinhado"><u>S</u></button>
-                </div>
-                <div class="evolution-editor" id="evolution-editor" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Escreva a evolução da família. Selecione um trecho e use B, I ou S para aplicar negrito, itálico ou sublinhado."></div>
-              </div>
-              <div class="section-actions">
-                <button class="solid-button" type="submit">Salvar evolução</button>
-                <button class="plain-button" id="cancel-evolution-edit-button" type="button" hidden>Cancelar edição</button>
-                <span class="resource-status-line" id="evolution-form-status" data-state="idle"></span>
-              </div>
-            </section>
-          </form>
-        </div>
-
-        <div class="panel" style="margin-top: 14px;">
-          <div class="panel-header">
-            <div>
-              <h2 class="panel-title">Histórico de evolução</h2>
-              <p class="panel-description">Registros livres da evolução familiar em ordem cronológica.</p>
-            </div>
-          </div>
-          <div class="evolution-timeline" id="evolution-records-timeline" aria-label="Linha do tempo de evolução familiar">
-            <div class="empty-note evolution-timeline-empty">Nenhuma evolução registrada.</div>
-          </div>
-        </div>
-      </section>
 
       <section class="screen" id="appointment-screen" data-title="Agendamento" aria-labelledby="appointment-title">
         <div class="back-row">
@@ -3476,6 +3378,7 @@
               </div>
               <div class="section-actions">
                 <button class="solid-button" type="submit">Salvar agendamento</button>
+                <button class="plain-button" id="cancel-appointment-edit-button" type="button" hidden>Cancelar edição</button>
                 <span class="status-line" id="appointment-form-status" data-state="idle" role="status"></span>
               </div>
             </form>
@@ -3870,6 +3773,147 @@
 
 
 
+  <div class="modal-backdrop record-edit-modal" id="resource-record-edit-modal" role="dialog" aria-modal="true" aria-labelledby="resource-record-edit-title">
+    <div class="modal-dialog">
+      <form class="family-form modal-form" id="resource-record-edit-form" autocomplete="off">
+        <div class="form-header">
+          <h2 id="resource-record-edit-title">Editar registro</h2>
+        </div>
+        <div class="family-history-tabs record-edit-tabs" role="tablist" aria-label="Aba do registro do recurso">
+          <button class="family-history-tab active" type="button" role="tab" aria-selected="true">Registro do recurso</button>
+        </div>
+        <section class="form-section" aria-labelledby="resource-record-edit-section-title">
+          <h3 class="section-title" id="resource-record-edit-section-title">Editar registro</h3>
+          <div class="form-table-wrap">
+            <table class="form-table resource-entry-table" aria-label="Editar registro de recurso">
+              <thead>
+                <tr>
+                  <th>Tipo</th>
+                  <th>Serviço/Item</th>
+                  <th>Descrição/Valor</th>
+                  <th>Data</th>
+                </tr>
+              </thead>
+              <tbody id="edit-resource-entry-body">
+                <tr data-edit-resource-line-row="true">
+                  <td data-label="Tipo">
+                    <select class="table-input" id="edit-resource-type" name="tipo" required>
+                      <option value="servico">Serviço acessado</option>
+                      <option value="doacao">Doação</option>
+                    </select>
+                  </td>
+                  <td data-label="Serviço/Item">
+                    <div class="table-option-combo" data-edit-resource-kind="servico">
+                      <select class="table-input" id="edit-resource-service" name="servico" data-option-select="servicosAcessados">
+                        <option value="">Selecionar</option>
+                      </select>
+                      <button class="option-manage-button" type="button" data-option-set="servicosAcessados" data-option-target="edit-resource-service" data-option-label="Serviço" aria-label="Editar opções de Serviço">⋯</button>
+                    </div>
+                    <div class="table-option-combo" data-edit-resource-kind="doacao" hidden>
+                      <select class="table-input" id="edit-resource-item" name="item" data-option-select="itensDoacao">
+                        <option value="">Selecionar</option>
+                      </select>
+                      <button class="option-manage-button" type="button" data-option-set="itensDoacao" data-option-target="edit-resource-item" data-option-label="Item" aria-label="Editar opções de Item">⋯</button>
+                    </div>
+                  </td>
+                  <td data-label="Descrição/Valor">
+                    <textarea class="table-input" id="edit-resource-description" name="descricao" rows="2" placeholder="Descrição do serviço" data-edit-resource-kind="servico"></textarea>
+                    <input class="table-input" id="edit-resource-quantity" name="quantidade" type="number" min="0" step="1" placeholder="Valor numérico" data-edit-resource-kind="doacao" hidden>
+                  </td>
+                  <td data-label="Data">
+                    <input class="table-input" id="edit-resource-date" name="data" type="date" data-date-input="true" autocomplete="off" required>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="resource-line-actions edit-resource-option-actions" aria-label="Adicionar opções de recurso">
+            <button class="resource-line-add-button" id="edit-resource-add-service-option" type="button" data-edit-resource-kind="servico">+ Adicionar serviço</button>
+            <button class="resource-line-add-button" id="edit-resource-add-item-option" type="button" data-edit-resource-kind="doacao" hidden>+ Adicionar item</button>
+          </div>
+          <span class="resource-status-line" id="resource-record-edit-status" data-state="idle" role="status"></span>
+        </section>
+        <div class="modal-actions">
+          <button class="plain-button" id="resource-record-edit-cancel" type="button">Cancelar</button>
+          <button class="solid-button" type="submit">Salvar alterações</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop record-edit-modal" id="evolution-record-edit-modal" role="dialog" aria-modal="true" aria-labelledby="evolution-record-edit-title">
+    <div class="modal-dialog">
+      <form class="family-form modal-form" id="evolution-record-edit-form" autocomplete="off">
+        <div class="form-header">
+          <h2 id="evolution-record-edit-title">Editar evolução</h2>
+        </div>
+        <div class="family-history-tabs record-edit-tabs" role="tablist" aria-label="Aba da evolução">
+          <button class="family-history-tab active" type="button" role="tab" aria-selected="true">Evolução</button>
+        </div>
+        <section class="form-section" aria-labelledby="evolution-record-edit-section-title">
+          <h3 class="section-title" id="evolution-record-edit-section-title">Editar evolução</h3>
+          <div class="form-grid two-columns">
+            <div class="field">
+              <label for="edit-evolution-date">Data do registro</label>
+              <input id="edit-evolution-date" name="data" type="date" data-date-input="true" autocomplete="off" required>
+            </div>
+          </div>
+          <div class="evolution-editor-panel">
+            <div class="evolution-toolbar" aria-label="Formatação do texto da evolução">
+              <button class="evolution-format-button" type="button" data-edit-evolution-command="bold" aria-pressed="false" title="Negrito"><strong>B</strong></button>
+              <button class="evolution-format-button" type="button" data-edit-evolution-command="italic" aria-pressed="false" title="Itálico"><em>I</em></button>
+              <button class="evolution-format-button" type="button" data-edit-evolution-command="underline" aria-pressed="false" title="Sublinhado"><u>S</u></button>
+            </div>
+            <div class="evolution-editor" id="edit-evolution-editor" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Edite a evolução da família."></div>
+          </div>
+          <span class="resource-status-line" id="evolution-record-edit-status" data-state="idle" role="status"></span>
+        </section>
+        <div class="modal-actions">
+          <button class="plain-button" id="evolution-record-edit-cancel" type="button">Cancelar</button>
+          <button class="solid-button" type="submit">Salvar alterações</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop record-edit-modal" id="appointment-record-edit-modal" role="dialog" aria-modal="true" aria-labelledby="appointment-record-edit-title">
+    <div class="modal-dialog">
+      <form class="family-form modal-form" id="appointment-record-edit-form" autocomplete="off">
+        <div class="form-header">
+          <h2 id="appointment-record-edit-title">Editar agendamento</h2>
+        </div>
+        <div class="family-history-tabs record-edit-tabs" role="tablist" aria-label="Aba do agendamento">
+          <button class="family-history-tab active" type="button" role="tab" aria-selected="true">Agendamento</button>
+        </div>
+        <section class="form-section" aria-labelledby="appointment-record-edit-section-title">
+          <h3 class="section-title" id="appointment-record-edit-section-title">Editar agendamento</h3>
+          <div class="form-grid appointment-form-grid">
+            <div class="field">
+              <label for="edit-appointment-date">Data</label>
+              <input id="edit-appointment-date" name="data" type="date" data-date-input="true" autocomplete="off" required>
+            </div>
+            <div class="field">
+              <label for="edit-appointment-family">Representante familiar</label>
+              <select id="edit-appointment-family" name="familia" required>
+                <option value="">Selecionar</option>
+              </select>
+            </div>
+            <div class="field full">
+              <label for="edit-appointment-description">Descrição</label>
+              <textarea id="edit-appointment-description" name="descricao" rows="3" placeholder="Descrição do agendamento" required></textarea>
+            </div>
+          </div>
+          <span class="status-line" id="appointment-record-edit-status" data-state="idle" role="status"></span>
+        </section>
+        <div class="modal-actions">
+          <button class="plain-button" id="appointment-record-edit-cancel" type="button">Cancelar</button>
+          <button class="solid-button" type="submit">Salvar alterações</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
   <div class="modal-backdrop" id="edit-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="edit-confirm-title">
     <div class="modal-dialog">
       <h2 id="edit-confirm-title">Confirmar alterações?</h2>
@@ -3991,6 +4035,9 @@
     const allFamiliesSearchInput = document.querySelector('#all-families-search-input');
     const allFamiliesList = document.querySelector('#all-families-list');
     const appointmentForm = document.querySelector('#appointment-form');
+    const appointmentFormTitle = document.querySelector('#appointment-form-title');
+    const appointmentSubmitButton = appointmentForm?.querySelector('button[type="submit"]');
+    const cancelAppointmentEditButton = document.querySelector('#cancel-appointment-edit-button');
     const appointmentDateInput = document.querySelector('#appointment-date');
     const appointmentFamilySelect = document.querySelector('#appointment-family');
     const appointmentDescriptionInput = document.querySelector('#appointment-description');
@@ -4001,6 +4048,8 @@
     const appointmentFamilyFilter = document.querySelector('#appointment-family-filter');
     const appointmentList = document.querySelector('#appointment-list');
     const resourceForm = document.querySelector('#resource-form');
+    const resourceScreenTitle = document.querySelector('#family-resource-title');
+    const resourceEditTabs = document.querySelector('#resource-edit-tabs');
     const resourceSectionTitle = document.querySelector('#resource-new-title');
     const resourceSubmitButton = resourceForm?.querySelector('button[type="submit"]');
     const cancelResourceEditButton = document.querySelector('#cancel-resource-edit-button');
@@ -4017,6 +4066,8 @@
     const resourceFormStatus = document.querySelector('#resource-form-status');
     const resourceRecordsTimeline = document.querySelector('#resource-records-timeline');
     const evolutionForm = document.querySelector('#evolution-form');
+    const evolutionScreenTitle = document.querySelector('#family-evolution-title');
+    const evolutionEditTabs = document.querySelector('#evolution-edit-tabs');
     const evolutionSectionTitle = document.querySelector('#evolution-new-title');
     const evolutionSubmitButton = evolutionForm?.querySelector('button[type="submit"]');
     const cancelEvolutionEditButton = document.querySelector('#cancel-evolution-edit-button');
@@ -4031,8 +4082,43 @@
     const familyHistoryDateClear = document.querySelector('#family-history-date-clear');
     const familyInlineResourceTimeline = document.querySelector('#family-inline-resource-timeline');
     const familyInlineEvolutionTimeline = document.querySelector('#family-inline-evolution-timeline');
+    const familyInlineAppointmentList = document.querySelector('#family-inline-appointment-list');
     const familyHistoryTabButtons = document.querySelectorAll('[data-family-history-tab]');
     const familyHistoryTabPanels = document.querySelectorAll('[data-family-history-panel]');
+    const resourceRecordEditModal = document.querySelector('#resource-record-edit-modal');
+    const resourceRecordEditForm = document.querySelector('#resource-record-edit-form');
+    const resourceRecordEditTitle = document.querySelector('#resource-record-edit-title');
+    const resourceRecordEditSectionTitle = document.querySelector('#resource-record-edit-section-title');
+    const resourceRecordEditSubmitButton = resourceRecordEditForm?.querySelector('button[type="submit"]');
+    const editResourceTypeSelect = document.querySelector('#edit-resource-type');
+    const editResourceEntryBody = document.querySelector('#edit-resource-entry-body');
+    const editResourceServiceSelect = document.querySelector('#edit-resource-service');
+    const editResourceItemSelect = document.querySelector('#edit-resource-item');
+    const editResourceDescriptionInput = document.querySelector('#edit-resource-description');
+    const editResourceQuantityInput = document.querySelector('#edit-resource-quantity');
+    const editResourceDateInput = document.querySelector('#edit-resource-date');
+    const editResourceAddServiceOptionButton = document.querySelector('#edit-resource-add-service-option');
+    const editResourceAddItemOptionButton = document.querySelector('#edit-resource-add-item-option');
+    const resourceRecordEditStatus = document.querySelector('#resource-record-edit-status');
+    const resourceRecordEditCancelButton = document.querySelector('#resource-record-edit-cancel');
+    const evolutionRecordEditModal = document.querySelector('#evolution-record-edit-modal');
+    const evolutionRecordEditForm = document.querySelector('#evolution-record-edit-form');
+    const evolutionRecordEditTitle = document.querySelector('#evolution-record-edit-title');
+    const evolutionRecordEditSectionTitle = document.querySelector('#evolution-record-edit-section-title');
+    const evolutionRecordEditSubmitButton = evolutionRecordEditForm?.querySelector('button[type="submit"]');
+    const editEvolutionDateInput = document.querySelector('#edit-evolution-date');
+    const editEvolutionEditor = document.querySelector('#edit-evolution-editor');
+    const editEvolutionFormatButtons = document.querySelectorAll('[data-edit-evolution-command]');
+    const evolutionRecordEditStatus = document.querySelector('#evolution-record-edit-status');
+    const evolutionRecordEditCancelButton = document.querySelector('#evolution-record-edit-cancel');
+    const appointmentRecordEditModal = document.querySelector('#appointment-record-edit-modal');
+    const appointmentRecordEditForm = document.querySelector('#appointment-record-edit-form');
+    const appointmentRecordEditTitle = document.querySelector('#appointment-record-edit-title');
+    const editAppointmentDateInput = document.querySelector('#edit-appointment-date');
+    const editAppointmentFamilySelect = document.querySelector('#edit-appointment-family');
+    const editAppointmentDescriptionInput = document.querySelector('#edit-appointment-description');
+    const appointmentRecordEditStatus = document.querySelector('#appointment-record-edit-status');
+    const appointmentRecordEditCancelButton = document.querySelector('#appointment-record-edit-cancel');
     const evolutionFormatButtons = document.querySelectorAll('[data-evolution-command]');
     const memberDetailsModal = document.querySelector('#member-details-modal');
     const memberDetailsCloseButton = document.querySelector('#member-details-close');
@@ -4614,6 +4700,7 @@
       activeViewedFamilyId = null;
       activeEditingResourceRecordId = null;
       activeEditingEvolutionRecordId = null;
+      activeEditingAppointmentId = null;
       pendingFamilyUpdate = null;
       pendingFamilyChanges = [];
       familyFormMode = 'create';
@@ -4774,6 +4861,953 @@
       appointmentFormStatus.dataset.state = state;
     }
 
+    function setAppointmentFormMode(mode = 'create') {
+      const isEditMode = mode === 'edit';
+      activeEditingAppointmentId = isEditMode ? activeEditingAppointmentId : null;
+
+      if (appointmentFormTitle) {
+        appointmentFormTitle.textContent = isEditMode ? 'Editar agendamento' : 'Novo agendamento';
+      }
+
+      if (appointmentSubmitButton) {
+        appointmentSubmitButton.textContent = isEditMode ? 'Salvar alterações' : 'Salvar agendamento';
+      }
+
+      if (cancelAppointmentEditButton) {
+        cancelAppointmentEditButton.hidden = !isEditMode;
+      }
+    }
+
+    function resetAppointmentForm() {
+      if (appointmentForm) {
+        appointmentForm.reset();
+      }
+
+      activeEditingAppointmentId = null;
+      setAppointmentFormMode('create');
+      setAppointmentFormStatus('', 'idle');
+      renderAppointmentFamilySelects();
+    }
+
+    function fillAppointmentFormFromRecord(record) {
+      if (!record || !appointmentForm) {
+        return;
+      }
+
+      if (appointmentDateInput) {
+        setDateInputValue(appointmentDateInput, record.date || getTodayValue());
+      }
+
+      renderFamilySelectOptions(appointmentFamilySelect, { includeAll: false, selectedValue: record.familyId || '' });
+
+      if (appointmentFamilySelect) {
+        appointmentFamilySelect.value = record.familyId || '';
+      }
+
+      if (appointmentDescriptionInput) {
+        appointmentDescriptionInput.value = record.description || '';
+      }
+    }
+
+    function buildUpdatedAppointmentRecord(originalRecord, formData) {
+      const updatedAt = new Date().toISOString();
+
+      return {
+        ...originalRecord,
+        type: 'agendamento',
+        title: `Agendamento: ${formData.familyTitle || originalRecord.familyTitle || 'família sem nome'}`,
+        date: formData.date,
+        familyId: formData.familyId,
+        familyTitle: formData.familyTitle,
+        description: formData.description,
+        status: originalRecord.status || '',
+        createdAt: originalRecord.createdAt || updatedAt,
+        updatedAt
+      };
+    }
+
+    function collectAppointmentRecordChanges(originalRecord, updatedRecord) {
+      const changes = [];
+
+      addChange(changes, 'Data', originalRecord.date || '', updatedRecord.date || '', 'date');
+      addChange(changes, 'Representante familiar', originalRecord.familyTitle || '', updatedRecord.familyTitle || '');
+      addChange(changes, 'Descrição', originalRecord.description || '', updatedRecord.description || '');
+
+      return changes;
+    }
+
+    function updateAppointmentFromForm(formData) {
+      const recordIndex = (appState.collections.appointments || []).findIndex((appointment) => appointment.id === activeEditingAppointmentId);
+
+      if (recordIndex < 0) {
+        setAppointmentFormStatus('Não foi possível localizar o agendamento selecionado para edição.', 'error');
+        return false;
+      }
+
+      const originalRecord = appState.collections.appointments[recordIndex];
+      const updatedRecord = buildUpdatedAppointmentRecord(originalRecord, formData);
+      const changes = collectAppointmentRecordChanges(originalRecord, updatedRecord);
+
+      appState.collections.appointments[recordIndex] = updatedRecord;
+      activeAppointmentMonth = getMonthFromDateValue(updatedRecord.date);
+
+      addAuditLog({
+        action: 'Editou agendamento',
+        changeType: 'edit',
+        entityType: 'Agendamento',
+        entityId: updatedRecord.id,
+        familyId: updatedRecord.familyId,
+        familyTitle: updatedRecord.familyTitle || '',
+        title: `Agendamento editado: ${updatedRecord.familyTitle || 'família sem nome'}`,
+        changes
+      });
+
+      saveAppState();
+      resetAppointmentForm();
+      setAppointmentFormStatus('Agendamento atualizado com sucesso.', 'success');
+      return true;
+    }
+
+    function openAppointmentEditScreen(appointmentId) {
+      openAppointmentEditModal(appointmentId);
+    }
+
+    function createAppointmentEditButton(appointment) {
+      const editButton = document.createElement('button');
+      editButton.className = 'table-action-button appointment-edit-button';
+      editButton.type = 'button';
+      editButton.textContent = 'Editar';
+      editButton.setAttribute('aria-label', `Editar agendamento de ${appointment.familyTitle || 'família sem nome'} em ${appointment.date ? formatDisplayDate(appointment.date) : 'data não informada'}`);
+      editButton.addEventListener('click', () => openAppointmentEditModal(appointment.id));
+      return editButton;
+    }
+
+
+    function setRecordEditStatus(element, message, state = 'idle') {
+      if (!element) {
+        return;
+      }
+
+      element.textContent = message;
+      element.dataset.state = state;
+    }
+
+    function closeResourceEditModal() {
+      resourceRecordEditModal?.classList.remove('visible');
+      resetEditResourceExtraLines();
+      resourceRecordEditForm?.reset();
+      activeEditingResourceRecordId = null;
+      setRecordEditStatus(resourceRecordEditStatus, '', 'idle');
+    }
+
+    function updateEditResourceTypeFields() {
+      if (!resourceRecordEditModal || !editResourceTypeSelect) {
+        return;
+      }
+
+      const isDonation = editResourceTypeSelect.value === 'doacao';
+      resourceRecordEditModal.querySelectorAll('[data-edit-resource-kind="servico"]').forEach((element) => {
+        setResourceKindVisibility(element, !isDonation);
+      });
+      resourceRecordEditModal.querySelectorAll('[data-edit-resource-kind="doacao"]').forEach((element) => {
+        setResourceKindVisibility(element, isDonation);
+      });
+    }
+
+
+    function getEditResourceLineRows() {
+      if (!editResourceEntryBody) {
+        return [];
+      }
+
+      return Array.from(editResourceEntryBody.querySelectorAll('[data-edit-resource-line-row="true"]'));
+    }
+
+    function createEditResourceLineRow() {
+      const row = document.createElement('tr');
+      row.dataset.editResourceLineRow = 'true';
+
+      const typeCell = document.createElement('td');
+      typeCell.className = 'resource-line-empty-cell';
+      typeCell.dataset.label = 'Tipo';
+      typeCell.textContent = 'Mesmo tipo';
+
+      const itemCell = document.createElement('td');
+      itemCell.dataset.label = 'Serviço/Item';
+
+      const serviceCombo = document.createElement('div');
+      serviceCombo.className = 'table-option-combo';
+      serviceCombo.dataset.editResourceKind = 'servico';
+
+      const serviceSelect = document.createElement('select');
+      serviceSelect.className = 'table-input';
+      serviceSelect.name = 'servico';
+      serviceSelect.dataset.optionSelect = 'servicosAcessados';
+      serviceSelect.innerHTML = '<option value="">Selecionar</option>';
+
+      const serviceButton = document.createElement('button');
+      serviceButton.className = 'option-manage-button';
+      serviceButton.type = 'button';
+      serviceButton.dataset.optionSet = 'servicosAcessados';
+      serviceButton.dataset.optionLabel = 'Serviço';
+      serviceButton.setAttribute('aria-label', 'Editar opções de Serviço');
+      serviceButton.textContent = '⋯';
+
+      serviceCombo.append(serviceSelect, serviceButton);
+
+      const donationCombo = document.createElement('div');
+      donationCombo.className = 'table-option-combo';
+      donationCombo.dataset.editResourceKind = 'doacao';
+      donationCombo.hidden = true;
+
+      const itemSelect = document.createElement('select');
+      itemSelect.className = 'table-input';
+      itemSelect.name = 'item';
+      itemSelect.dataset.optionSelect = 'itensDoacao';
+      itemSelect.innerHTML = '<option value="">Selecionar</option>';
+
+      const itemButton = document.createElement('button');
+      itemButton.className = 'option-manage-button';
+      itemButton.type = 'button';
+      itemButton.dataset.optionSet = 'itensDoacao';
+      itemButton.dataset.optionLabel = 'Item';
+      itemButton.setAttribute('aria-label', 'Editar opções de Item');
+      itemButton.textContent = '⋯';
+
+      donationCombo.append(itemSelect, itemButton);
+      itemCell.append(serviceCombo, donationCombo);
+
+      const detailCell = document.createElement('td');
+      detailCell.dataset.label = 'Descrição/Valor';
+
+      const description = document.createElement('textarea');
+      description.className = 'table-input';
+      description.name = 'descricao';
+      description.rows = 2;
+      description.placeholder = 'Descrição do serviço';
+      description.dataset.editResourceKind = 'servico';
+
+      const quantity = document.createElement('input');
+      quantity.className = 'table-input';
+      quantity.name = 'quantidade';
+      quantity.type = 'number';
+      quantity.min = '0';
+      quantity.step = '1';
+      quantity.placeholder = 'Valor numérico';
+      quantity.dataset.editResourceKind = 'doacao';
+      quantity.hidden = true;
+
+      detailCell.append(description, quantity);
+
+      const actionCell = document.createElement('td');
+      actionCell.className = 'resource-line-remove-cell';
+      actionCell.dataset.label = 'Data';
+
+      const removeButton = document.createElement('button');
+      removeButton.className = 'resource-line-remove-button';
+      removeButton.type = 'button';
+      removeButton.setAttribute('aria-label', 'Remover linha');
+      removeButton.textContent = '×';
+      removeButton.addEventListener('click', () => row.remove());
+
+      actionCell.append(removeButton);
+      row.append(typeCell, itemCell, detailCell, actionCell);
+
+      return row;
+    }
+
+    function addEditResourceLine() {
+      if (!editResourceEntryBody) {
+        return;
+      }
+
+      const row = createEditResourceLineRow();
+      editResourceEntryBody.append(row);
+      renderManagedOptionSelects();
+      updateEditResourceTypeFields();
+      setTimeout(() => {
+        const field = row.querySelector(editResourceTypeSelect?.value === 'doacao' ? 'select[name="item"]' : 'select[name="servico"]');
+        field?.focus();
+      }, 0);
+    }
+
+    function resetEditResourceExtraLines() {
+      getEditResourceLineRows().slice(1).forEach((row) => row.remove());
+    }
+
+    function openEditResourceOptionManager(optionSetKey) {
+      openOptionManager(optionSetKey);
+    }
+
+    function fillResourceEditModalFromRecord(record) {
+      if (!record || !resourceRecordEditForm) {
+        return;
+      }
+
+      resetEditResourceExtraLines();
+      resourceRecordEditForm.reset();
+      renderManagedOptionSelects();
+
+      if (editResourceTypeSelect) {
+        editResourceTypeSelect.value = record.type === 'doacao' ? 'doacao' : 'servico';
+      }
+
+      if (editResourceDateInput) {
+        setDateInputValue(editResourceDateInput, record.date || getTodayValue());
+      }
+
+      updateEditResourceTypeFields();
+
+      if (record.type === 'doacao') {
+        setFieldValuePreservingOption(editResourceItemSelect, record.item || '');
+        if (editResourceQuantityInput) {
+          editResourceQuantityInput.value = record.quantidade || '';
+        }
+      } else {
+        setFieldValuePreservingOption(editResourceServiceSelect, record.servico || '');
+        if (editResourceDescriptionInput) {
+          editResourceDescriptionInput.value = record.descricao || '';
+        }
+      }
+
+      updateEditResourceTypeFields();
+    }
+
+    function openResourceCreateModal() {
+      const family = activeViewedFamilyId ? findFamilyById(activeViewedFamilyId) : null;
+
+      if (!family) {
+        if (familyFormStatus) {
+          familyFormStatus.textContent = 'Abra uma ficha familiar antes de registrar recurso recebido.';
+          familyFormStatus.dataset.state = 'error';
+        }
+        return;
+      }
+
+      const familyDisplayName = getFamilyRepresentativeName(family) || family.title || 'Família sem nome';
+      activeEditingResourceRecordId = null;
+      resetEditResourceExtraLines();
+      resourceRecordEditForm?.reset();
+      renderManagedOptionSelects();
+
+      if (resourceRecordEditTitle) {
+        resourceRecordEditTitle.textContent = familyDisplayName;
+      }
+
+      if (resourceRecordEditSectionTitle) {
+        resourceRecordEditSectionTitle.textContent = 'Novo registro';
+      }
+
+      if (resourceRecordEditSubmitButton) {
+        resourceRecordEditSubmitButton.textContent = 'Salvar registro';
+      }
+
+      if (editResourceTypeSelect) {
+        editResourceTypeSelect.value = 'servico';
+      }
+
+      if (editResourceDateInput) {
+        setDateInputValue(editResourceDateInput, getTodayValue());
+      }
+
+      updateEditResourceTypeFields();
+      setRecordEditStatus(resourceRecordEditStatus, 'Preencha o novo registro de recurso e salve.', 'idle');
+      resourceRecordEditModal?.classList.add('visible');
+      setTimeout(() => editResourceTypeSelect?.focus(), 0);
+    }
+
+    function openResourceEditModal(recordId) {
+      const record = (appState.collections.resourceRecords || []).find((item) => item.id === recordId);
+
+      if (!record) {
+        setRecordEditStatus(familyFormStatus, 'Não foi possível localizar o registro selecionado.', 'error');
+        return;
+      }
+
+      const family = findFamilyById(record.familyId);
+      const familyDisplayName = getFamilyRepresentativeName(family) || record.familyTitle || 'Família sem nome';
+      activeEditingResourceRecordId = record.id;
+
+      if (resourceRecordEditTitle) {
+        resourceRecordEditTitle.textContent = familyDisplayName;
+      }
+
+      if (resourceRecordEditSectionTitle) {
+        resourceRecordEditSectionTitle.textContent = 'Editar registro';
+      }
+
+      if (resourceRecordEditSubmitButton) {
+        resourceRecordEditSubmitButton.textContent = 'Salvar alterações';
+      }
+
+      fillResourceEditModalFromRecord(record);
+      setRecordEditStatus(resourceRecordEditStatus, 'Edite o registro selecionado e salve as alterações.', 'idle');
+      resourceRecordEditModal?.classList.add('visible');
+      setTimeout(() => editResourceTypeSelect?.focus(), 0);
+    }
+
+    function createResourceRecordFromEditModalLine(row, context) {
+      const { family, type, date, now, lineIndex, originalRecord } = context;
+      const familyTitle = getFamilyRepresentativeName(family) || originalRecord?.familyTitle || '';
+      const record = {
+        id: originalRecord?.id || createId('resource'),
+        familyId: originalRecord?.familyId || family?.id || activeViewedFamilyId || '',
+        familyTitle,
+        type,
+        tipo: getResourceTypeLabel(type),
+        date,
+        createdAt: originalRecord?.createdAt || now,
+        updatedAt: now,
+        lineIndex
+      };
+
+      if (type === 'doacao') {
+        const itemSelect = row.querySelector('select[name="item"]');
+        const quantityInput = row.querySelector('[name="quantidade"]');
+        record.item = normalizeOptionValue(itemSelect?.value || '');
+        record.quantidade = quantityInput?.value || '';
+        record.title = `Doação: ${record.item || 'item não informado'}`;
+      } else {
+        const serviceSelect = row.querySelector('select[name="servico"]');
+        const descriptionInput = row.querySelector('[name="descricao"]');
+        record.servico = normalizeOptionValue(serviceSelect?.value || '');
+        record.descricao = String(descriptionInput?.value || '').trim();
+        record.title = `Serviço acessado: ${record.servico || 'serviço não informado'}`;
+      }
+
+      return record;
+    }
+
+    function collectResourceEditModalRecords(originalRecord = null) {
+      const family = findFamilyById(originalRecord?.familyId || activeViewedFamilyId || '');
+      const type = editResourceTypeSelect?.value === 'doacao' ? 'doacao' : 'servico';
+      const date = getDateInputValue(editResourceDateInput);
+      const now = new Date().toISOString();
+      const rows = getEditResourceLineRows();
+
+      return rows
+        .map((row, index) => createResourceRecordFromEditModalLine(row, {
+          family,
+          type,
+          date,
+          now,
+          lineIndex: index + 1,
+          originalRecord: index === 0 ? originalRecord : null
+        }))
+        .filter((record, index) => index === 0 || !isResourceRecordBlank(record));
+    }
+
+    function validateResourceEditModalRecords(records) {
+      const firstRecord = records[0];
+
+      if (!firstRecord?.familyId) {
+        return 'Não foi possível identificar a família deste registro.';
+      }
+
+      if (!firstRecord.date) {
+        return 'Informe a data do recurso recebido.';
+      }
+
+      const hasFilledRecord = records.some((record) => !isResourceRecordBlank(record));
+
+      if (!hasFilledRecord) {
+        return firstRecord.type === 'doacao'
+          ? 'Informe pelo menos um item da doação.'
+          : 'Informe pelo menos um serviço acessado.';
+      }
+
+      for (const record of records) {
+        if (isResourceRecordBlank(record)) {
+          continue;
+        }
+
+        if (record.type === 'doacao') {
+          if (!record.item) {
+            return 'Informe o item da doação em todas as linhas preenchidas.';
+          }
+
+          if (!record.quantidade) {
+            return 'Informe o valor numérico da doação em todas as linhas preenchidas.';
+          }
+        } else if (!record.servico) {
+          return 'Informe o serviço acessado em todas as linhas preenchidas.';
+        }
+      }
+
+      return '';
+    }
+
+    function addCreatedResourceRecord(record) {
+      appState.collections.resourceRecords.push(record);
+      const timelineUser = getCurrentAuditUser();
+      appState.collections.timelineEvents.push({
+        id: createId('timeline'),
+        type: 'recurso-recebido',
+        familyId: record.familyId,
+        familyTitle: record.familyTitle || '',
+        resourceRecordId: record.id,
+        title: `Recurso recebido: ${record.title}`,
+        date: record.date,
+        createdAt: record.createdAt,
+        userId: timelineUser.id,
+        username: timelineUser.username
+      });
+      addAuditLog({
+        action: 'Registrou recurso',
+        changeType: 'create',
+        entityType: 'Registro de recursos',
+        entityId: record.id,
+        familyId: record.familyId,
+        familyTitle: record.familyTitle || '',
+        title: `Recurso registrado: ${record.title}`,
+        newRecord: createResourceAuditFields(record)
+      });
+    }
+
+    function saveResourceEditModal(event) {
+      event.preventDefault();
+
+      if (activeEditingResourceRecordId) {
+        const recordIndex = (appState.collections.resourceRecords || []).findIndex((record) => record.id === activeEditingResourceRecordId);
+
+        if (recordIndex < 0) {
+          setRecordEditStatus(resourceRecordEditStatus, 'Não foi possível localizar o registro selecionado para edição.', 'error');
+          return;
+        }
+
+        const originalRecord = appState.collections.resourceRecords[recordIndex];
+        const modalRecords = collectResourceEditModalRecords(originalRecord);
+        const filledRecords = modalRecords.filter((record) => !isResourceRecordBlank(record));
+        const validationMessage = validateResourceEditModalRecords(modalRecords);
+
+        if (validationMessage) {
+          setRecordEditStatus(resourceRecordEditStatus, validationMessage, 'error');
+          return;
+        }
+
+        const updatedRecord = buildUpdatedResourceRecord(originalRecord, filledRecords[0]);
+        const changes = collectResourceRecordChanges(originalRecord, updatedRecord);
+        appState.collections.resourceRecords[recordIndex] = updatedRecord;
+        updateResourceTimelineEvent(updatedRecord);
+        addAuditLog({
+          action: 'Editou recurso',
+          changeType: 'edit',
+          entityType: 'Registro de recursos',
+          entityId: updatedRecord.id,
+          familyId: updatedRecord.familyId,
+          familyTitle: updatedRecord.familyTitle || '',
+          title: `Recurso editado: ${updatedRecord.title}`,
+          changes
+        });
+
+        filledRecords.slice(1).forEach((record) => addCreatedResourceRecord(record));
+
+        closeResourceEditModal();
+        saveAppState();
+        renderResourceRecords();
+        renderFamilyLinkedHistory();
+        const successMessage = filledRecords.length === 1
+          ? 'Registro de recurso atualizado com sucesso.'
+          : `Registro de recurso atualizado e ${filledRecords.length - 1} nova(s) linha(s) adicionada(s) com sucesso.`;
+        if (familyFormStatus) {
+          familyFormStatus.textContent = successMessage;
+          familyFormStatus.dataset.state = 'success';
+        }
+        setRecordEditStatus(resourceFormStatus, successMessage, 'success');
+        return;
+      }
+
+      const modalRecords = collectResourceEditModalRecords(null);
+      const filledRecords = modalRecords.filter((record) => !isResourceRecordBlank(record));
+      const validationMessage = validateResourceEditModalRecords(modalRecords);
+
+      if (validationMessage) {
+        setRecordEditStatus(resourceRecordEditStatus, validationMessage, 'error');
+        return;
+      }
+
+      filledRecords.forEach((record) => addCreatedResourceRecord(record));
+      closeResourceEditModal();
+      saveAppState();
+      renderResourceRecords();
+      renderFamilyLinkedHistory();
+
+      const successMessage = filledRecords.length === 1
+        ? 'Recurso recebido registrado com sucesso.'
+        : `${filledRecords.length} recursos recebidos registrados com sucesso.`;
+
+      if (familyFormStatus) {
+        familyFormStatus.textContent = successMessage;
+        familyFormStatus.dataset.state = 'success';
+      }
+      setRecordEditStatus(resourceFormStatus, successMessage, 'success');
+    }
+
+    function closeEvolutionEditModal() {
+      evolutionRecordEditModal?.classList.remove('visible');
+      evolutionRecordEditForm?.reset();
+      if (editEvolutionEditor) {
+        editEvolutionEditor.innerHTML = '';
+      }
+      activeEditingEvolutionRecordId = null;
+      setRecordEditStatus(evolutionRecordEditStatus, '', 'idle');
+    }
+
+    function fillEvolutionEditModalFromRecord(record) {
+      if (!record || !evolutionRecordEditForm) {
+        return;
+      }
+
+      evolutionRecordEditForm.reset();
+
+      if (editEvolutionDateInput) {
+        setDateInputValue(editEvolutionDateInput, record.date || getTodayValue());
+      }
+
+      if (editEvolutionEditor) {
+        editEvolutionEditor.innerHTML = getEvolutionRecordHtml(record);
+      }
+
+      updateEditEvolutionToolbarState();
+    }
+
+    function openEvolutionCreateModal() {
+      const family = activeViewedFamilyId ? findFamilyById(activeViewedFamilyId) : null;
+
+      if (!family) {
+        if (familyFormStatus) {
+          familyFormStatus.textContent = 'Abra uma ficha familiar antes de registrar evolução.';
+          familyFormStatus.dataset.state = 'error';
+        }
+        return;
+      }
+
+      const familyDisplayName = getFamilyRepresentativeName(family) || family.title || 'Família sem nome';
+      activeEditingEvolutionRecordId = null;
+      evolutionRecordEditForm?.reset();
+
+      if (editEvolutionEditor) {
+        editEvolutionEditor.innerHTML = '';
+        editEvolutionEditor.dataset.placeholder = 'Escreva a evolução da família. Selecione um trecho e use B, I ou S para aplicar negrito, itálico ou sublinhado.';
+      }
+
+      if (editEvolutionDateInput) {
+        setDateInputValue(editEvolutionDateInput, getTodayValue());
+      }
+
+      if (evolutionRecordEditTitle) {
+        evolutionRecordEditTitle.textContent = familyDisplayName;
+      }
+
+      if (evolutionRecordEditSectionTitle) {
+        evolutionRecordEditSectionTitle.textContent = 'Nova evolução';
+      }
+
+      if (evolutionRecordEditSubmitButton) {
+        evolutionRecordEditSubmitButton.textContent = 'Salvar evolução';
+      }
+
+      updateEditEvolutionToolbarState();
+      setRecordEditStatus(evolutionRecordEditStatus, 'Preencha a nova evolução e salve.', 'idle');
+      evolutionRecordEditModal?.classList.add('visible');
+      setTimeout(() => editEvolutionDateInput?.focus(), 0);
+    }
+
+    function openEvolutionEditModal(recordId) {
+      const record = (appState.collections.evolutionRecords || []).find((item) => item.id === recordId);
+
+      if (!record) {
+        setRecordEditStatus(familyFormStatus, 'Não foi possível localizar a evolução selecionada.', 'error');
+        return;
+      }
+
+      const family = findFamilyById(record.familyId);
+      const familyDisplayName = getFamilyRepresentativeName(family) || record.familyTitle || 'Família sem nome';
+      activeEditingEvolutionRecordId = record.id;
+
+      if (evolutionRecordEditTitle) {
+        evolutionRecordEditTitle.textContent = familyDisplayName;
+      }
+
+      if (evolutionRecordEditSectionTitle) {
+        evolutionRecordEditSectionTitle.textContent = 'Editar evolução';
+      }
+
+      if (evolutionRecordEditSubmitButton) {
+        evolutionRecordEditSubmitButton.textContent = 'Salvar alterações';
+      }
+
+      if (editEvolutionEditor) {
+        editEvolutionEditor.dataset.placeholder = 'Edite a evolução da família.';
+      }
+
+      fillEvolutionEditModalFromRecord(record);
+      setRecordEditStatus(evolutionRecordEditStatus, 'Edite a evolução selecionada e salve as alterações.', 'idle');
+      evolutionRecordEditModal?.classList.add('visible');
+      setTimeout(() => editEvolutionDateInput?.focus(), 0);
+    }
+
+    function getEditEvolutionEditorText() {
+      return String(editEvolutionEditor?.innerText || editEvolutionEditor?.textContent || '')
+        .replace(/\u00a0/g, ' ')
+        .trim();
+    }
+
+    function updateEditEvolutionToolbarState() {
+      if (!editEvolutionFormatButtons?.length) {
+        return;
+      }
+
+      editEvolutionFormatButtons.forEach((button) => {
+        const command = button.dataset.editEvolutionCommand;
+        let isPressed = false;
+
+        try {
+          isPressed = Boolean(command && document.queryCommandState(command));
+        } catch (error) {
+          isPressed = false;
+        }
+
+        button.setAttribute('aria-pressed', isPressed ? 'true' : 'false');
+      });
+    }
+
+    function applyEditEvolutionFormat(command) {
+      if (!editEvolutionEditor || !command) {
+        return;
+      }
+
+      editEvolutionEditor.focus();
+      document.execCommand(command, false, null);
+      updateEditEvolutionToolbarState();
+    }
+
+    function saveEvolutionEditModal(event) {
+      event.preventDefault();
+      const date = getDateInputValue(editEvolutionDateInput);
+      const contentText = getEditEvolutionEditorText();
+      const contentHtml = sanitizeRichTextHtml(editEvolutionEditor?.innerHTML || '');
+
+      if (!date) {
+        setRecordEditStatus(evolutionRecordEditStatus, 'Informe a data da evolução.', 'error');
+        editEvolutionDateInput?.focus();
+        return;
+      }
+
+      if (!contentText) {
+        setRecordEditStatus(evolutionRecordEditStatus, 'Escreva o texto da evolução antes de salvar.', 'error');
+        editEvolutionEditor?.focus();
+        return;
+      }
+
+      if (activeEditingEvolutionRecordId) {
+        const recordIndex = (appState.collections.evolutionRecords || []).findIndex((record) => record.id === activeEditingEvolutionRecordId);
+
+        if (recordIndex < 0) {
+          setRecordEditStatus(evolutionRecordEditStatus, 'Não foi possível localizar a evolução selecionada para edição.', 'error');
+          return;
+        }
+
+        const originalRecord = appState.collections.evolutionRecords[recordIndex];
+        const family = findFamilyById(originalRecord.familyId);
+        const updatedRecord = buildUpdatedEvolutionRecord(originalRecord, {
+          familyTitle: getFamilyRepresentativeName(family) || originalRecord.familyTitle || '',
+          date,
+          contentHtml,
+          contentText
+        });
+        const changes = collectEvolutionRecordChanges(originalRecord, updatedRecord);
+        appState.collections.evolutionRecords[recordIndex] = updatedRecord;
+        updateEvolutionTimelineEvent(updatedRecord);
+        addAuditLog({
+          action: 'Editou evolução',
+          changeType: 'edit',
+          entityType: 'Evolução',
+          entityId: updatedRecord.id,
+          familyId: updatedRecord.familyId,
+          familyTitle: updatedRecord.familyTitle || '',
+          title: `Evolução editada: ${updatedRecord.familyTitle || 'família sem nome'}`,
+          changes
+        });
+
+        closeEvolutionEditModal();
+        saveAppState();
+        renderEvolutionRecords();
+        renderFamilyLinkedHistory();
+        if (familyFormStatus) {
+          familyFormStatus.textContent = 'Evolução atualizada com sucesso.';
+          familyFormStatus.dataset.state = 'success';
+        }
+        setRecordEditStatus(evolutionFormStatus, 'Evolução atualizada com sucesso.', 'success');
+        return;
+      }
+
+      const family = activeViewedFamilyId ? findFamilyById(activeViewedFamilyId) : null;
+
+      if (!family) {
+        setRecordEditStatus(evolutionRecordEditStatus, 'Abra uma ficha familiar antes de registrar evolução.', 'error');
+        return;
+      }
+
+      const now = new Date().toISOString();
+      const familyTitle = getFamilyRepresentativeName(family) || family.title || '';
+      const record = {
+        id: createId('evolution'),
+        familyId: family.id,
+        familyTitle,
+        type: 'evolucao',
+        title: 'Evolução',
+        date,
+        contentHtml,
+        contentText,
+        createdAt: now,
+        updatedAt: now
+      };
+
+      appState.collections.evolutionRecords.push(record);
+      const timelineUser = getCurrentAuditUser();
+      appState.collections.timelineEvents.push({
+        id: createId('timeline'),
+        type: 'evolucao-familiar',
+        familyId: record.familyId,
+        familyTitle: record.familyTitle || '',
+        evolutionRecordId: record.id,
+        title: `Evolução registrada: ${record.familyTitle || 'família sem nome'}`,
+        date: record.date,
+        createdAt: record.createdAt,
+        userId: timelineUser.id,
+        username: timelineUser.username
+      });
+      addAuditLog({
+        action: 'Registrou evolução',
+        changeType: 'create',
+        entityType: 'Evolução',
+        entityId: record.id,
+        familyId: record.familyId,
+        familyTitle: record.familyTitle || '',
+        title: `Evolução registrada: ${record.familyTitle || 'família sem nome'}`,
+        newRecord: createEvolutionAuditFields(record)
+      });
+
+      closeEvolutionEditModal();
+      saveAppState();
+      renderEvolutionRecords();
+      renderFamilyLinkedHistory();
+
+      if (familyFormStatus) {
+        familyFormStatus.textContent = 'Evolução registrada com sucesso.';
+        familyFormStatus.dataset.state = 'success';
+      }
+      setRecordEditStatus(evolutionFormStatus, 'Evolução registrada com sucesso.', 'success');
+    }
+
+    function closeAppointmentEditModal() {
+      appointmentRecordEditModal?.classList.remove('visible');
+      appointmentRecordEditForm?.reset();
+      activeEditingAppointmentId = null;
+      setRecordEditStatus(appointmentRecordEditStatus, '', 'idle');
+    }
+
+    function fillAppointmentEditModalFromRecord(record) {
+      if (!record || !appointmentRecordEditForm) {
+        return;
+      }
+
+      appointmentRecordEditForm.reset();
+      renderFamilySelectOptions(editAppointmentFamilySelect, { includeAll: false, selectedValue: record.familyId || '' });
+
+      if (editAppointmentDateInput) {
+        setDateInputValue(editAppointmentDateInput, record.date || getTodayValue());
+      }
+
+      if (editAppointmentFamilySelect) {
+        editAppointmentFamilySelect.value = record.familyId || '';
+      }
+
+      if (editAppointmentDescriptionInput) {
+        editAppointmentDescriptionInput.value = record.description || '';
+      }
+    }
+
+    function openAppointmentEditModal(appointmentId) {
+      const record = (appState.collections.appointments || []).find((appointment) => appointment.id === appointmentId);
+
+      if (!record) {
+        setAppointmentFormStatus('Não foi possível localizar o agendamento selecionado.', 'error');
+        return;
+      }
+
+      const family = findFamilyById(record.familyId);
+      const familyDisplayName = getFamilyRepresentativeName(family) || record.familyTitle || 'Família sem nome';
+      activeEditingAppointmentId = record.id;
+
+      if (appointmentRecordEditTitle) {
+        appointmentRecordEditTitle.textContent = familyDisplayName;
+      }
+
+      fillAppointmentEditModalFromRecord(record);
+      setRecordEditStatus(appointmentRecordEditStatus, 'Edite o agendamento selecionado e salve as alterações.', 'idle');
+      appointmentRecordEditModal?.classList.add('visible');
+      setTimeout(() => editAppointmentDateInput?.focus(), 0);
+    }
+
+    function saveAppointmentEditModal(event) {
+      event.preventDefault();
+      const recordIndex = (appState.collections.appointments || []).findIndex((appointment) => appointment.id === activeEditingAppointmentId);
+
+      if (recordIndex < 0) {
+        setRecordEditStatus(appointmentRecordEditStatus, 'Não foi possível localizar o agendamento selecionado para edição.', 'error');
+        return;
+      }
+
+      const originalRecord = appState.collections.appointments[recordIndex];
+      const date = getDateInputValue(editAppointmentDateInput);
+      const family = findFamilyById(editAppointmentFamilySelect?.value || '');
+      const description = String(editAppointmentDescriptionInput?.value || '').trim();
+
+      if (!date) {
+        setRecordEditStatus(appointmentRecordEditStatus, 'Informe a data do agendamento.', 'error');
+        editAppointmentDateInput?.focus();
+        return;
+      }
+
+      if (!family) {
+        setRecordEditStatus(appointmentRecordEditStatus, 'Selecione o representante familiar.', 'error');
+        editAppointmentFamilySelect?.focus();
+        return;
+      }
+
+      if (!description) {
+        setRecordEditStatus(appointmentRecordEditStatus, 'Informe a descrição do agendamento.', 'error');
+        editAppointmentDescriptionInput?.focus();
+        return;
+      }
+
+      const updatedRecord = buildUpdatedAppointmentRecord(originalRecord, {
+        date,
+        familyId: family.id,
+        familyTitle: getFamilyRepresentativeName(family),
+        description
+      });
+      const changes = collectAppointmentRecordChanges(originalRecord, updatedRecord);
+      appState.collections.appointments[recordIndex] = updatedRecord;
+      activeAppointmentMonth = getMonthFromDateValue(updatedRecord.date);
+      addAuditLog({
+        action: 'Editou agendamento',
+        changeType: 'edit',
+        entityType: 'Agendamento',
+        entityId: updatedRecord.id,
+        familyId: updatedRecord.familyId,
+        familyTitle: updatedRecord.familyTitle || '',
+        title: `Agendamento editado: ${updatedRecord.familyTitle || 'família sem nome'}`,
+        changes
+      });
+
+      closeAppointmentEditModal();
+      saveAppState();
+      setAppointmentFormStatus('Agendamento atualizado com sucesso.', 'success');
+    }
+
     function getSortedFamilies() {
       return [...(appState.collections?.families || [])]
         .sort((a, b) => getFamilyRepresentativeName(a).localeCompare(getFamilyRepresentativeName(b), 'pt-BR', { sensitivity: 'base' }));
@@ -4841,6 +5875,16 @@
         return;
       }
 
+      if (activeEditingAppointmentId) {
+        updateAppointmentFromForm({
+          date,
+          familyId: family.id,
+          familyTitle: getFamilyRepresentativeName(family),
+          description
+        });
+        return;
+      }
+
       const auditUser = getCurrentAuditUser();
       const now = new Date().toISOString();
       const record = {
@@ -4875,6 +5919,7 @@
       });
 
       activeAppointmentMonth = getMonthFromDateValue(date);
+      setAppointmentFormMode('create');
       setAppointmentFormStatus('Agendamento salvo.', 'connected');
       if (appointmentDescriptionInput) {
         appointmentDescriptionInput.value = '';
@@ -4985,7 +6030,7 @@
         });
         statusSelect.value = appointment.status || '';
         statusSelect.addEventListener('change', () => updateAppointmentStatus(appointment.id, statusSelect.value));
-        statusField.append(statusLabel, statusSelect);
+        statusField.append(statusLabel, statusSelect, createAppointmentEditButton(appointment));
 
         card.append(date, main, statusField);
         appointmentList.append(card);
@@ -5409,7 +6454,7 @@
 
       return {
         screenId: state.screenId,
-        familyHistoryTab: ['form', 'resources', 'evolution'].includes(state.familyHistoryTab) ? state.familyHistoryTab : 'form',
+        familyHistoryTab: ['form', 'resources', 'evolution', 'appointments'].includes(state.familyHistoryTab) ? state.familyHistoryTab : 'form',
         activeViewedFamilyId: state.activeViewedFamilyId || null,
         familyFormMode: ['create', 'view', 'edit'].includes(state.familyFormMode) ? state.familyFormMode : 'create'
       };
@@ -5551,7 +6596,7 @@
     function createFamilyFallbackNavigationState(tabKey = 'form') {
       return {
         screenId: 'add-family-screen',
-        familyHistoryTab: ['form', 'resources', 'evolution'].includes(tabKey) ? tabKey : 'form',
+        familyHistoryTab: ['form', 'resources', 'evolution', 'appointments'].includes(tabKey) ? tabKey : 'form',
         activeViewedFamilyId: activeViewedFamilyId || null,
         familyFormMode: activeViewedFamilyId ? 'view' : 'create'
       };
@@ -6190,6 +7235,7 @@
     let activeFamilyHistoryTab = 'form';
     let activeEditingResourceRecordId = null;
     let activeEditingEvolutionRecordId = null;
+    let activeEditingAppointmentId = null;
     let navigationHistory = [];
     let activeAppointmentMonth = getCurrentMonthValue();
     let pendingFamilyUpdate = null;
@@ -6955,6 +8001,23 @@
     function setResourceFormMode(mode = 'create') {
       const isEditMode = mode === 'edit';
       activeEditingResourceRecordId = isEditMode ? activeEditingResourceRecordId : null;
+      const family = activeViewedFamilyId ? findFamilyById(activeViewedFamilyId) : null;
+      const familyDisplayName = getFamilyRepresentativeName(family);
+
+      if (resourceScreenTitle) {
+        resourceScreenTitle.textContent = isEditMode ? familyDisplayName : 'Registro de recursos';
+      }
+
+      if (resourceFamilyLabel) {
+        resourceFamilyLabel.hidden = isEditMode;
+        resourceFamilyLabel.innerHTML = family
+          ? `<strong>Família:</strong> <strong>${escapeHtml(familyDisplayName)}</strong>`
+          : 'Selecione uma família para registrar o recurso recebido.';
+      }
+
+      if (resourceEditTabs) {
+        resourceEditTabs.hidden = !isEditMode;
+      }
 
       if (resourceSectionTitle) {
         resourceSectionTitle.textContent = isEditMode ? 'Editar registro' : 'Novo registro';
@@ -7033,37 +8096,14 @@
     }
 
     function openFamilyResourceScreen(options = {}) {
-      const family = activeViewedFamilyId ? findFamilyById(activeViewedFamilyId) : null;
+      const editRecordId = options && !(options instanceof Event) ? options.editRecordId : '';
 
-      if (!family) {
-        familyFormStatus.textContent = 'Abra uma ficha familiar antes de registrar recurso recebido.';
-        familyFormStatus.dataset.state = 'error';
+      if (editRecordId) {
+        openResourceEditModal(editRecordId);
         return;
       }
 
-      if (resourceFamilyLabel) {
-        resourceFamilyLabel.textContent = `Família: ${family.identificacao?.nome || family.title || 'Família sem nome'}`;
-      }
-
-      const editRecordId = options && !(options instanceof Event) ? options.editRecordId : '';
-      const editRecord = editRecordId
-        ? (appState.collections.resourceRecords || []).find((record) => record.id === editRecordId && record.familyId === family.id)
-        : null;
-
-      resetResourceForm();
-
-      if (editRecord) {
-        activeEditingResourceRecordId = editRecord.id;
-        setResourceFormMode('edit');
-        fillResourceFormFromRecord(editRecord);
-        if (resourceFormStatus) {
-          resourceFormStatus.textContent = 'Edite o registro selecionado e salve as alterações.';
-          resourceFormStatus.dataset.state = 'idle';
-        }
-      }
-
-      renderResourceRecords();
-      showScreen('family-resource-screen');
+      openResourceCreateModal();
     }
 
     function createResourceRecordFromLine(row, context) {
@@ -7147,7 +8187,7 @@
           }
 
           if (!record.quantidade) {
-            return 'Informe a quantidade da doação em todas as linhas preenchidas.';
+            return 'Informe o valor numérico da doação em todas as linhas preenchidas.';
           }
         } else if (!record.servico) {
           return 'Informe o serviço acessado em todas as linhas preenchidas.';
@@ -7372,7 +8412,7 @@
           editButton.type = 'button';
           editButton.textContent = 'Editar';
           editButton.setAttribute('aria-label', `Editar registro de recurso de ${record.type === 'doacao' ? (record.item || 'item não informado') : (record.servico || 'serviço não informado')}`);
-          editButton.addEventListener('click', () => openFamilyResourceScreen({ editRecordId: record.id }));
+          editButton.addEventListener('click', () => openResourceEditModal(record.id));
 
           actions.append(editButton);
           entry.append(kind, main, detail, actions);
@@ -7388,6 +8428,23 @@
     function setEvolutionFormMode(mode = 'create') {
       const isEditMode = mode === 'edit';
       activeEditingEvolutionRecordId = isEditMode ? activeEditingEvolutionRecordId : null;
+      const family = activeViewedFamilyId ? findFamilyById(activeViewedFamilyId) : null;
+      const familyDisplayName = getFamilyRepresentativeName(family);
+
+      if (evolutionScreenTitle) {
+        evolutionScreenTitle.textContent = isEditMode ? familyDisplayName : 'Evolução';
+      }
+
+      if (evolutionFamilyLabel) {
+        evolutionFamilyLabel.hidden = isEditMode;
+        evolutionFamilyLabel.innerHTML = family
+          ? `<strong>Família:</strong> <strong>${escapeHtml(familyDisplayName)}</strong>`
+          : 'Selecione uma família para registrar uma evolução.';
+      }
+
+      if (evolutionEditTabs) {
+        evolutionEditTabs.hidden = !isEditMode;
+      }
 
       if (evolutionSectionTitle) {
         evolutionSectionTitle.textContent = isEditMode ? 'Editar evolução' : 'Novo registro de evolução';
@@ -7419,37 +8476,14 @@
     }
 
     function openFamilyEvolutionScreen(options = {}) {
-      const family = activeViewedFamilyId ? findFamilyById(activeViewedFamilyId) : null;
+      const editRecordId = options && !(options instanceof Event) ? options.editRecordId : '';
 
-      if (!family) {
-        familyFormStatus.textContent = 'Abra uma ficha familiar antes de registrar evolução.';
-        familyFormStatus.dataset.state = 'error';
+      if (editRecordId) {
+        openEvolutionEditModal(editRecordId);
         return;
       }
 
-      if (evolutionFamilyLabel) {
-        evolutionFamilyLabel.textContent = `Família: ${family.identificacao?.nome || family.title || 'Família sem nome'}`;
-      }
-
-      const editRecordId = options && !(options instanceof Event) ? options.editRecordId : '';
-      const editRecord = editRecordId
-        ? (appState.collections.evolutionRecords || []).find((record) => record.id === editRecordId && record.familyId === family.id)
-        : null;
-
-      resetEvolutionForm();
-
-      if (editRecord) {
-        activeEditingEvolutionRecordId = editRecord.id;
-        setEvolutionFormMode('edit');
-        fillEvolutionFormFromRecord(editRecord);
-        if (evolutionFormStatus) {
-          evolutionFormStatus.textContent = 'Edite a evolução selecionada e salve as alterações.';
-          evolutionFormStatus.dataset.state = 'idle';
-        }
-      }
-
-      renderEvolutionRecords();
-      showScreen('family-evolution-screen');
+      openEvolutionCreateModal();
     }
 
     function resetEvolutionForm() {
@@ -7790,7 +8824,7 @@
           editButton.type = 'button';
           editButton.textContent = 'Editar';
           editButton.setAttribute('aria-label', `Editar evolução de ${record.date ? formatDisplayDate(record.date) : 'data não informada'}`);
-          editButton.addEventListener('click', () => openFamilyEvolutionScreen({ editRecordId: record.id }));
+          editButton.addEventListener('click', () => openEvolutionEditModal(record.id));
 
           const entryHeader = document.createElement('div');
           entryHeader.className = 'evolution-timeline-entry-header';
@@ -7887,7 +8921,7 @@
           editButton.type = 'button';
           editButton.textContent = 'Editar';
           editButton.setAttribute('aria-label', `Editar registro de recurso de ${record.type === 'doacao' ? (record.item || 'item não informado') : (record.servico || 'serviço não informado')}`);
-          editButton.addEventListener('click', () => openFamilyResourceScreen({ editRecordId: record.id }));
+          editButton.addEventListener('click', () => openResourceEditModal(record.id));
 
           actions.append(editButton);
           entry.append(kind, main, detail, actions);
@@ -7964,7 +8998,7 @@
           editButton.type = 'button';
           editButton.textContent = 'Editar';
           editButton.setAttribute('aria-label', `Editar evolução de ${record.date ? formatDisplayDate(record.date) : 'data não informada'}`);
-          editButton.addEventListener('click', () => openFamilyEvolutionScreen({ editRecordId: record.id }));
+          editButton.addEventListener('click', () => openEvolutionEditModal(record.id));
 
           const entryHeader = document.createElement('div');
           entryHeader.className = 'evolution-timeline-entry-header';
@@ -7980,14 +9014,86 @@
       });
     }
 
+    function renderFamilyAppointmentsInto(container, familyId, options = {}) {
+      if (!container) {
+        return;
+      }
+
+      const dateFilter = normalizeDateValue(options.dateFilter || '');
+      container.innerHTML = '';
+      const appointments = [...(appState.collections?.appointments || [])]
+        .filter((appointment) => appointment.familyId === familyId)
+        .filter((appointment) => !dateFilter || appointment.date === dateFilter)
+        .sort((first, second) => {
+          return String(second.date || '').localeCompare(String(first.date || '')) || String(second.createdAt || '').localeCompare(String(first.createdAt || ''));
+        });
+
+      if (!appointments.length) {
+        const empty = document.createElement('div');
+        empty.className = 'empty-note';
+        empty.textContent = dateFilter
+          ? 'Nenhum agendamento registrado nesta data.'
+          : 'Nenhum agendamento registrado.';
+        container.append(empty);
+        return;
+      }
+
+      appointments.forEach((appointment) => {
+        const card = document.createElement('article');
+        card.className = 'appointment-card';
+
+        const date = document.createElement('div');
+        date.className = 'appointment-date';
+        date.textContent = appointment.date ? formatDisplayDate(appointment.date) : 'Sem data';
+
+        const main = document.createElement('div');
+        const title = document.createElement('div');
+        title.className = 'appointment-family';
+        title.textContent = appointment.description || 'Sem descrição';
+
+        const user = document.createElement('div');
+        user.className = 'appointment-user';
+        user.textContent = `Cadastrado por: ${appointment.createdByUsername || 'Usuário não identificado'}`;
+
+        main.append(title, user);
+
+        const statusField = document.createElement('div');
+        statusField.className = 'appointment-status-field';
+
+        const statusLabel = document.createElement('label');
+        statusLabel.textContent = 'Status';
+
+        const statusSelect = document.createElement('select');
+        statusSelect.setAttribute('aria-label', `Status do agendamento de ${appointment.familyTitle || 'família'}`);
+        [
+          ['', 'Pendente'],
+          ['realizado', 'Realizado'],
+          ['reagendado', 'Reagendado'],
+          ['ausencia', 'Ausência']
+        ].forEach(([value, label]) => {
+          const option = document.createElement('option');
+          option.value = value;
+          option.textContent = label;
+          statusSelect.append(option);
+        });
+
+        statusSelect.value = appointment.status || '';
+        statusSelect.addEventListener('change', () => updateAppointmentStatus(appointment.id, statusSelect.value));
+        statusField.append(statusLabel, statusSelect, createAppointmentEditButton(appointment));
+
+        card.append(date, main, statusField);
+        container.append(card);
+      });
+    }
+
     function setFamilyHistoryTab(tabKey) {
       const canShowLinkedTabs = familyFormMode === 'view' && Boolean(activeViewedFamilyId);
-      const requestedTab = ['form', 'resources', 'evolution'].includes(tabKey) ? tabKey : 'form';
+      const requestedTab = ['form', 'resources', 'evolution', 'appointments'].includes(tabKey) ? tabKey : 'form';
       activeFamilyHistoryTab = canShowLinkedTabs || requestedTab === 'form' ? requestedTab : 'form';
 
       familyHistoryTabButtons.forEach((button) => {
         const tab = button.dataset.familyHistoryTab;
-        const isLinkedTab = tab === 'resources' || tab === 'evolution';
+        const isLinkedTab = tab !== 'form';
         const isActive = tab === activeFamilyHistoryTab;
 
         button.hidden = isLinkedTab && !canShowLinkedTabs;
@@ -8025,6 +9131,7 @@
       const dateFilter = getFamilyHistoryDateFilterValue();
       renderResourceTimelineInto(familyInlineResourceTimeline, activeViewedFamilyId, { dateFilter });
       renderEvolutionTimelineInto(familyInlineEvolutionTimeline, activeViewedFamilyId, { dateFilter });
+      renderFamilyAppointmentsInto(familyInlineAppointmentList, activeViewedFamilyId, { dateFilter });
       setFamilyHistoryTab(activeFamilyHistoryTab);
     }
 
@@ -9850,6 +10957,14 @@
     }
 
     appointmentForm?.addEventListener('submit', saveAppointment);
+    cancelAppointmentEditButton?.addEventListener('click', resetAppointmentForm);
+    appointmentRecordEditForm?.addEventListener('submit', saveAppointmentEditModal);
+    appointmentRecordEditCancelButton?.addEventListener('click', closeAppointmentEditModal);
+    appointmentRecordEditModal?.addEventListener('click', (event) => {
+      if (event.target === appointmentRecordEditModal) {
+        closeAppointmentEditModal();
+      }
+    });
     appointmentPrevMonthButton?.addEventListener('click', () => changeAppointmentMonth(-1));
     appointmentNextMonthButton?.addEventListener('click', () => changeAppointmentMonth(1));
     appointmentFamilyFilter?.addEventListener('change', renderAppointments);
@@ -9880,8 +10995,8 @@
     if (familyForm) {
       familyForm.addEventListener('submit', saveFamily);
       editFamilyButton?.addEventListener('click', startFamilyEditMode);
-      registerResourceButton?.addEventListener('click', openFamilyResourceScreen);
-      evolutionButton?.addEventListener('click', openFamilyEvolutionScreen);
+      registerResourceButton?.addEventListener('click', openResourceCreateModal);
+      evolutionButton?.addEventListener('click', openEvolutionCreateModal);
       cancelEditConfirmButton?.addEventListener('click', closeEditConfirmModal);
       confirmEditSaveButton?.addEventListener('click', () => {
         if (!pendingFamilyUpdate) {
@@ -9914,6 +11029,16 @@
       incomeSourceCancelButton.addEventListener('click', closeIncomeSourceModal);
       resourceForm?.addEventListener('submit', saveResourceRecord);
       resourceTypeSelect?.addEventListener('change', updateResourceTypeFields);
+      resourceRecordEditForm?.addEventListener('submit', saveResourceEditModal);
+      resourceRecordEditCancelButton?.addEventListener('click', closeResourceEditModal);
+      editResourceTypeSelect?.addEventListener('change', updateEditResourceTypeFields);
+      editResourceAddServiceOptionButton?.addEventListener('click', addEditResourceLine);
+      editResourceAddItemOptionButton?.addEventListener('click', addEditResourceLine);
+      resourceRecordEditModal?.addEventListener('click', (event) => {
+        if (event.target === resourceRecordEditModal) {
+          closeResourceEditModal();
+        }
+      });
       addResourceLineButton?.addEventListener('click', addResourceLine);
       cancelResourceEditButton?.addEventListener('click', resetResourceForm);
       resourceBackFamilyButton?.addEventListener('click', () => {
@@ -9921,6 +11046,13 @@
       });
       evolutionForm?.addEventListener('submit', saveEvolutionRecord);
       cancelEvolutionEditButton?.addEventListener('click', resetEvolutionForm);
+      evolutionRecordEditForm?.addEventListener('submit', saveEvolutionEditModal);
+      evolutionRecordEditCancelButton?.addEventListener('click', closeEvolutionEditModal);
+      evolutionRecordEditModal?.addEventListener('click', (event) => {
+        if (event.target === evolutionRecordEditModal) {
+          closeEvolutionEditModal();
+        }
+      });
       evolutionBackFamilyButton?.addEventListener('click', () => {
         goBackToPreviousScreen('home-screen', createFamilyFallbackNavigationState('evolution'));
       });
@@ -9940,6 +11072,12 @@
       evolutionEditor?.addEventListener('keyup', updateEvolutionToolbarState);
       evolutionEditor?.addEventListener('mouseup', updateEvolutionToolbarState);
       evolutionEditor?.addEventListener('focus', updateEvolutionToolbarState);
+      editEvolutionFormatButtons.forEach((button) => {
+        button.addEventListener('click', () => applyEditEvolutionFormat(button.dataset.editEvolutionCommand));
+      });
+      editEvolutionEditor?.addEventListener('keyup', updateEditEvolutionToolbarState);
+      editEvolutionEditor?.addEventListener('mouseup', updateEditEvolutionToolbarState);
+      editEvolutionEditor?.addEventListener('focus', updateEditEvolutionToolbarState);
       incomeSourceModal.addEventListener('click', (event) => {
         if (event.target === incomeSourceModal) {
           closeIncomeSourceModal();
