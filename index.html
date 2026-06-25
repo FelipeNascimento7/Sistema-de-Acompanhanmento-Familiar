@@ -4557,7 +4557,8 @@
       saveAppState({ skipDrive: true });
       setDeleteAllRecordsStatus('Todos os registros foram apagados e o backup do Google Drive foi excluído. Apenas metadados/opções foram preservados.', 'connected');
       setLoginStatus('Todos os registros foram apagados. Registre um novo usuário para acessar o sistema.', 'success');
-      showScreen('login-screen');
+      resetNavigationHistory();
+      showScreen('login-screen', { recordHistory: false });
     }
 
     function createDisplayPreviewState(value) {
@@ -5284,8 +5285,114 @@
       });
     }
 
-    function showScreen(screenId) {
+    function captureNavigationState() {
+      const activeScreen = document.querySelector('.screen.active');
+
+      return {
+        screenId: activeScreen?.id || '',
+        familyHistoryTab: activeFamilyHistoryTab || 'form',
+        activeViewedFamilyId: activeViewedFamilyId || null,
+        familyFormMode: familyFormMode || 'create'
+      };
+    }
+
+    function normalizeNavigationState(state) {
+      if (!state || !state.screenId) {
+        return null;
+      }
+
+      return {
+        screenId: state.screenId,
+        familyHistoryTab: ['form', 'resources', 'evolution'].includes(state.familyHistoryTab) ? state.familyHistoryTab : 'form',
+        activeViewedFamilyId: state.activeViewedFamilyId || null,
+        familyFormMode: ['create', 'view', 'edit'].includes(state.familyFormMode) ? state.familyFormMode : 'create'
+      };
+    }
+
+    function navigationStatesMatch(firstState, secondState) {
+      const first = normalizeNavigationState(firstState);
+      const second = normalizeNavigationState(secondState);
+
+      if (!first || !second) {
+        return false;
+      }
+
+      return first.screenId === second.screenId
+        && first.familyHistoryTab === second.familyHistoryTab
+        && first.activeViewedFamilyId === second.activeViewedFamilyId
+        && first.familyFormMode === second.familyFormMode;
+    }
+
+    function pushNavigationState(state = captureNavigationState()) {
+      const normalizedState = normalizeNavigationState(state);
+
+      if (!normalizedState?.screenId) {
+        return;
+      }
+
+      const lastState = navigationHistory[navigationHistory.length - 1];
+      if (navigationStatesMatch(lastState, normalizedState)) {
+        return;
+      }
+
+      navigationHistory.push(normalizedState);
+
+      if (navigationHistory.length > 80) {
+        navigationHistory = navigationHistory.slice(-80);
+      }
+    }
+
+    function resetNavigationHistory() {
+      navigationHistory = [];
+    }
+
+    function restoreFamilyScreenState(state) {
+      const normalizedState = normalizeNavigationState(state);
+      const desiredTab = normalizedState?.familyHistoryTab || 'form';
+
+      if (!normalizedState || normalizedState.screenId !== 'add-family-screen') {
+        return;
+      }
+
+      if (normalizedState.activeViewedFamilyId) {
+        const family = findFamilyById(normalizedState.activeViewedFamilyId);
+
+        if (!family) {
+          activeViewedFamilyId = null;
+          activeFamilyHistoryTab = 'form';
+          setFamilyViewMode(false);
+          return;
+        }
+
+        activeViewedFamilyId = family.id;
+        setFamilyViewMode(false);
+        fillFamilyFormFromRecord(family);
+
+        if (normalizedState.familyFormMode === 'edit') {
+          setFamilyEditMode();
+          familyFormStatus.textContent = 'Modo edição. Faça as alterações e clique em Salvar família.';
+          familyFormStatus.dataset.state = 'idle';
+        } else {
+          activeFamilyHistoryTab = desiredTab;
+          setFamilyViewMode(true);
+          familyFormStatus.textContent = 'Modo visualização. Clique em Editar para alterar a ficha familiar.';
+          familyFormStatus.dataset.state = 'idle';
+        }
+
+        setFamilyFormBaseline();
+        return;
+      }
+
+      activeViewedFamilyId = null;
+      activeFamilyHistoryTab = 'form';
+      setFamilyViewMode(false);
+      setFamilyHistoryTab('form');
+      updateFamilyHeaderTitle();
+    }
+
+    function showScreen(screenId, options = {}) {
       const requestedScreenId = screenId;
+      const shouldRecordHistory = options.recordHistory !== false;
 
       if (requestedScreenId !== 'login-screen' && !isAuthenticated()) {
         setLoginStatus('Faça login para acessar o sistema.', 'error');
@@ -5296,7 +5403,7 @@
       const currentScreen = document.querySelector('.screen.active');
 
       if (!targetScreen) {
-        return;
+        return false;
       }
 
       if (
@@ -5305,7 +5412,11 @@
         hasUnsavedFamilyFormData() &&
         !window.confirm('Você perderá os dados preenchidos. Deseja sair mesmo assim?')
       ) {
-        return;
+        return false;
+      }
+
+      if (shouldRecordHistory && currentScreen && currentScreen !== targetScreen) {
+        pushNavigationState(captureNavigationState());
       }
 
       screens.forEach((screen) => {
@@ -5314,6 +5425,59 @@
 
       screenLabel.textContent = getScreenTitle(targetScreen);
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      return true;
+    }
+
+    function restoreNavigationState(state) {
+      const normalizedState = normalizeNavigationState(state);
+
+      if (!normalizedState?.screenId) {
+        return false;
+      }
+
+      if (normalizedState.screenId === 'add-family-screen') {
+        restoreFamilyScreenState(normalizedState);
+      }
+
+      return showScreen(normalizedState.screenId, { recordHistory: false });
+    }
+
+    function createFamilyFallbackNavigationState(tabKey = 'form') {
+      return {
+        screenId: 'add-family-screen',
+        familyHistoryTab: ['form', 'resources', 'evolution'].includes(tabKey) ? tabKey : 'form',
+        activeViewedFamilyId: activeViewedFamilyId || null,
+        familyFormMode: activeViewedFamilyId ? 'view' : 'create'
+      };
+    }
+
+    function goBackToPreviousScreen(fallbackScreenId = 'home-screen', fallbackState = null) {
+      while (navigationHistory.length) {
+        const previousState = navigationHistory.pop();
+
+        if (navigationStatesMatch(previousState, captureNavigationState())) {
+          continue;
+        }
+
+        if (restoreNavigationState(previousState)) {
+          return true;
+        }
+
+        navigationHistory.push(previousState);
+        return false;
+      }
+
+      if (fallbackState && restoreNavigationState(fallbackState)) {
+        return false;
+      }
+
+      showScreen(fallbackScreenId, { recordHistory: false });
+      return false;
+    }
+
+    function isBackNavigationButton(button) {
+      const text = String(button?.textContent || '').trim().toLowerCase();
+      return Boolean(button?.closest('.back-row')) || text.startsWith('voltar');
     }
 
     function getScreenTitle(screen) {
@@ -5346,14 +5510,19 @@
         return;
       }
 
+      event.preventDefault();
+
+      if (isBackNavigationButton(navigationButton)) {
+        goBackToPreviousScreen(navigationButton.dataset.screen || 'home-screen');
+        return;
+      }
+
       if (!isAuthenticated() && navigationButton.dataset.screen !== 'login-screen') {
-        event.preventDefault();
-        showScreen('login-screen');
+        showScreen('login-screen', { recordHistory: false });
         return;
       }
 
       if (navigationButton.dataset.screen === 'add-family-screen') {
-        event.preventDefault();
         openFamilyCreateMode();
         return;
       }
@@ -5913,6 +6082,7 @@
     let familyFormMode = 'create';
     let activeViewedFamilyId = null;
     let activeFamilyHistoryTab = 'form';
+    let navigationHistory = [];
     let activeAppointmentMonth = getCurrentMonthValue();
     let pendingFamilyUpdate = null;
     let pendingFamilyChanges = [];
@@ -6147,7 +6317,8 @@
       if (loginPasswordInput) {
         loginPasswordInput.value = '';
       }
-      showScreen('home-screen');
+      resetNavigationHistory();
+      showScreen('home-screen', { recordHistory: false });
     }
 
     function openUserRegisterModal() {
@@ -6221,7 +6392,8 @@
       saveAppState();
       closeUserRegisterModal();
       setLoginStatus(`Usuário ${username} registrado e conectado.`, 'success');
-      showScreen('home-screen');
+      resetNavigationHistory();
+      showScreen('home-screen', { recordHistory: false });
     }
 
     function logoutUser() {
@@ -6230,7 +6402,8 @@
         loginForm.reset();
       }
       setLoginStatus('Sessão encerrada. Informe usuário e senha para entrar.', 'idle');
-      showScreen('login-screen');
+      resetNavigationHistory();
+      showScreen('login-screen', { recordHistory: false });
     }
 
     function createId(prefix) {
@@ -9257,19 +9430,11 @@
       resourceTypeSelect?.addEventListener('change', updateResourceTypeFields);
       addResourceLineButton?.addEventListener('click', addResourceLine);
       resourceBackFamilyButton?.addEventListener('click', () => {
-        if (activeViewedFamilyId) {
-          openFamilyViewMode(activeViewedFamilyId);
-        } else {
-          showScreen('home-screen');
-        }
+        goBackToPreviousScreen('home-screen', createFamilyFallbackNavigationState('resources'));
       });
       evolutionForm?.addEventListener('submit', saveEvolutionRecord);
       evolutionBackFamilyButton?.addEventListener('click', () => {
-        if (activeViewedFamilyId) {
-          openFamilyViewMode(activeViewedFamilyId);
-        } else {
-          showScreen('home-screen');
-        }
+        goBackToPreviousScreen('home-screen', createFamilyFallbackNavigationState('evolution'));
       });
       familyHistoryDateFilter?.addEventListener('input', renderFamilyLinkedHistory);
       familyHistoryDateClear?.addEventListener('click', () => {
@@ -9428,9 +9593,9 @@
     renderApp();
 
     if (restoreLoginSession()) {
-      showScreen('home-screen');
+      showScreen('home-screen', { recordHistory: false });
     } else {
-      showScreen('login-screen');
+      showScreen('login-screen', { recordHistory: false });
     }
 
     if (!isGoogleDriveConfigured()) {
