@@ -154,7 +154,7 @@
       margin: 0 auto;
       padding: 10px 18px 12px;
       border-top: 1px solid rgba(154, 91, 0, 0.28);
-      color: var(--danger);
+      color: var(--warning);
       font-size: 0.88rem;
       font-weight: 900;
       line-height: 1.35;
@@ -4274,7 +4274,7 @@
 
         <div class="hero">
           <span class="eyebrow">Relatórios</span>
-          <h1 id="reports-title">Relatórios [em desenvolvimento]</h1>
+          <h1 id="reports-title">Relatórios</h1>
           <p class="hero-text">Totais de todas as opções do sistema, com filtros combinados por opções e por data.</p>
         </div>
 
@@ -5086,6 +5086,8 @@
     let pendingDriveAuthOptions = {};
     let driveAccessWaiters = [];
     let localOfflineAccessActive = false;
+    let reconnectDrivePromptInProgress = false;
+    let lastReconnectDrivePromptAt = 0;
 
     let appState = createDefaultState();
 
@@ -9063,6 +9065,49 @@
       }
 
       updateOfflineSyncBanner();
+    }
+
+    function shouldOpenDriveSyncPopupAfterReconnect() {
+      if (isBrowserOffline() || !isAuthenticated() || !isGoogleDriveConfigured()) {
+        return false;
+      }
+
+      return Boolean(
+        localOfflineAccessActive ||
+        hasPendingDriveOperations() ||
+        localStorage.getItem(drivePreferenceKey) === 'true'
+      );
+    }
+
+    async function openDriveSyncPopupAfterReconnect() {
+      if (!shouldOpenDriveSyncPopupAfterReconnect()) {
+        return;
+      }
+
+      const now = Date.now();
+
+      if (reconnectDrivePromptInProgress || now - lastReconnectDrivePromptAt < 15000) {
+        return;
+      }
+
+      reconnectDrivePromptInProgress = true;
+      lastReconnectDrivePromptAt = now;
+      setSyncStatus('Internet restabelecida. Abrindo pop-up do Google Drive para sincronizar e mesclar as alterações locais...', 'syncing');
+
+      try {
+        googleAccessToken = null;
+        await requestGoogleDriveAccess({
+          silent: false,
+          forceRefresh: true,
+          reason: 'online-reconnect'
+        });
+      } catch (error) {
+        console.warn('Não foi possível abrir/sincronizar automaticamente com o Google Drive após reconectar.', error);
+        setSyncStatus('Internet voltou, mas o pop-up do Google Drive pode ter sido bloqueado. Clique em Sincronizar agora para mesclar as alterações locais.', 'error');
+      } finally {
+        reconnectDrivePromptInProgress = false;
+        updateOfflineSyncBanner();
+      }
     }
 
     function setSyncStatus(message, state = 'idle') {
@@ -14411,17 +14456,9 @@
     });
 
     window.addEventListener('online', () => {
-      setSyncStatus('Internet restabelecida. Conecte ou sincronize o Google Drive para mesclar as alterações locais.', 'syncing');
+      setSyncStatus('Internet restabelecida. Abrindo pop-up do Google Drive para sincronizar e mesclar as alterações locais...', 'syncing');
       updateOfflineSyncBanner();
-
-      if (googleAccessToken) {
-        loadStateFromDrive({ saveAfterMerge: true })
-          .then(() => saveStateToDrive({ mergeBeforeSave: false }))
-          .catch((error) => {
-            console.warn('Não foi possível sincronizar automaticamente após a internet voltar.', error);
-            setSyncStatus('Internet voltou, mas não foi possível sincronizar automaticamente. Clique em Sincronizar agora.', 'error');
-          });
-      }
+      openDriveSyncPopupAfterReconnect();
     });
 
     window.addEventListener('load', () => {
