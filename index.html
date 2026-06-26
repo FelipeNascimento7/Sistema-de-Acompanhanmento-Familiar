@@ -1871,16 +1871,21 @@
     }
 
     .field input[type="date"],
+    .field input[type="month"],
     .table-input[type="date"],
+    .table-input[type="month"],
     .report-filter-field input[type="date"],
-    .family-history-filter-field input[type="date"] {
+    .report-filter-field input[type="month"],
+    .family-history-filter-field input[type="date"],
+    .family-history-filter-field input[type="month"] {
       -webkit-appearance: auto;
       appearance: auto;
       color-scheme: light;
       cursor: pointer;
     }
 
-    input[type="date"]::-webkit-calendar-picker-indicator {
+    input[type="date"]::-webkit-calendar-picker-indicator,
+    input[type="month"]::-webkit-calendar-picker-indicator {
       cursor: pointer;
       opacity: 1;
     }
@@ -2185,6 +2190,14 @@
       .resource-timeline-detail {
         grid-column: auto;
       }
+
+      .family-unified-timeline-entry {
+        grid-template-columns: 1fr;
+      }
+
+      .family-unified-timeline-detail {
+        grid-column: auto;
+      }
     }
 
 
@@ -2444,6 +2457,21 @@
     .family-history-filter-field {
       display: grid;
       gap: 6px;
+      padding: 10px;
+      border: 2px solid transparent;
+      border-radius: var(--radius);
+      transition: border-color 140ms ease, box-shadow 140ms ease;
+    }
+
+    .family-history-filter-field[data-filter-active="true"] {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(17, 17, 17, 0.08);
+    }
+
+    .family-history-filter-field[data-filter-active="true"] label,
+    .family-history-filter-field[data-filter-active="true"] input {
+      color: var(--text);
+      font-weight: 950;
     }
 
     .family-history-filter-field label {
@@ -2521,7 +2549,241 @@
       display: none !important;
     }
 
+    .family-unified-timeline {
+      position: relative;
+      display: grid;
+      gap: 0;
+      padding: 4px 0;
+    }
+
+    .family-unified-timeline::before {
+      content: "";
+      position: absolute;
+      top: 18px;
+      bottom: 18px;
+      left: 6px;
+      width: 1px;
+      border-radius: 999px;
+      background: var(--line);
+    }
+
+    .family-unified-timeline-day {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(118px, 150px) minmax(0, 1fr);
+      gap: 22px;
+      align-items: start;
+      padding: 12px 0 12px 24px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .family-unified-timeline-day:last-child {
+      border-bottom: 0;
+    }
+
+    .family-unified-timeline-day::before {
+      content: "";
+      position: absolute;
+      top: 19px;
+      left: 2px;
+      z-index: 1;
+      width: 9px;
+      height: 9px;
+      border: 2px solid var(--surface);
+      border-radius: 50%;
+      background: var(--muted);
+      box-shadow: 0 0 0 1px var(--line);
+    }
+
+    .family-unified-timeline-date {
+      color: var(--text);
+      font-size: 0.95rem;
+      font-weight: 900;
+      line-height: 1.25;
+      letter-spacing: -0.01em;
+    }
+
+    .family-unified-timeline-count {
+      display: block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 750;
+    }
+
+    .family-unified-timeline-records {
+      display: grid;
+      gap: 0;
+    }
+
+    .family-unified-timeline-entry {
+      display: grid;
+      grid-template-columns: minmax(116px, 0.58fr) minmax(180px, 1fr) minmax(180px, 1.08fr) auto;
+      gap: 12px;
+      align-items: start;
+      padding: 7px 0;
+      border: 0;
+      background: transparent;
+    }
+
+    .family-unified-timeline-entry + .family-unified-timeline-entry {
+      border-top: 1px solid var(--line);
+      padding-top: 11px;
+      margin-top: 4px;
+    }
+
+    .family-unified-timeline-type {
+      width: auto;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 850;
+      letter-spacing: 0.02em;
+      line-height: 1.35;
+      text-transform: uppercase;
+    }
+
+    .family-unified-timeline-main,
+    .family-unified-timeline-detail {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .family-unified-timeline-title {
+      color: var(--text);
+      font-size: 0.98rem;
+      font-weight: 900;
+      line-height: 1.35;
+    }
+
+    .family-unified-timeline-meta {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 780;
+      line-height: 1.35;
+    }
+
+    .family-unified-timeline-detail {
+      color: var(--text);
+      font-size: 0.96rem;
+      font-weight: 750;
+      line-height: 1.35;
+      white-space: pre-wrap;
+    }
+
+    .family-unified-timeline-detail p {
+      margin: 0 0 10px;
+    }
+
+    .family-unified-timeline-detail p:last-child {
+      margin-bottom: 0;
+    }
+
+    .family-unified-timeline-detail strong {
+      font-weight: 950;
+    }
+
+    .family-unified-timeline-detail em {
+      font-style: italic;
+    }
+
+    .family-unified-timeline-detail u {
+      text-decoration: underline;
+      text-underline-offset: 0.16em;
+    }
+
+    .family-unified-timeline-entry[data-timeline-type="evolution"] {
+      grid-template-columns: minmax(116px, 0.58fr) minmax(0, 1fr);
+    }
+
+    .family-unified-timeline-entry[data-timeline-type="evolution"] .family-unified-timeline-main {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 3px 10px;
+      align-items: start;
+    }
+
+    .family-unified-timeline-entry[data-timeline-type="evolution"] .family-unified-timeline-title,
+    .family-unified-timeline-entry[data-timeline-type="evolution"] .family-unified-timeline-meta {
+      grid-column: 1;
+    }
+
+    .family-unified-timeline-entry[data-timeline-type="evolution"] .family-unified-timeline-actions {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+      justify-content: flex-end;
+    }
+
+    .family-unified-timeline-entry[data-timeline-type="evolution"] .family-unified-timeline-detail {
+      grid-column: 1 / -1;
+      margin-top: 2px;
+      padding-top: 0;
+    }
+
+    .family-unified-timeline-actions {
+      display: flex;
+      justify-content: flex-end;
+      align-items: start;
+    }
+
+    .family-unified-timeline-edit-button {
+      min-height: 34px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      white-space: nowrap;
+    }
+
+    .family-unified-timeline-empty {
+      margin: 8px 0;
+    }
+
     @media (max-width: 760px) {
+      .family-unified-timeline::before {
+        left: 5px;
+      }
+
+      .family-unified-timeline-day {
+        grid-template-columns: 1fr;
+        gap: 8px;
+        padding-left: 24px;
+      }
+
+      .family-unified-timeline-entry {
+        grid-template-columns: minmax(92px, 0.8fr) minmax(0, 1.2fr);
+        gap: 4px 10px;
+      }
+
+      .family-unified-timeline-detail {
+        grid-column: 2;
+      }
+
+      .family-unified-timeline-entry[data-timeline-type="evolution"] {
+        grid-template-columns: minmax(92px, 0.8fr) minmax(0, 1.2fr);
+      }
+
+      .family-unified-timeline-entry[data-timeline-type="evolution"] .family-unified-timeline-main {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .family-unified-timeline-entry[data-timeline-type="evolution"] .family-unified-timeline-actions {
+        grid-column: 1;
+        grid-row: auto;
+        justify-content: flex-start;
+      }
+
+      .family-unified-timeline-entry[data-timeline-type="evolution"] .family-unified-timeline-detail {
+        grid-column: 1 / -1;
+      }
+
+      .family-unified-timeline-actions {
+        grid-column: 1 / -1;
+        justify-content: flex-end;
+      }
+
       .evolution-timeline::before {
         left: 5px;
       }
@@ -2538,6 +2800,16 @@
 
       .evolution-timeline-actions {
         justify-content: flex-end;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .family-unified-timeline-entry {
+        grid-template-columns: 1fr;
+      }
+
+      .family-unified-timeline-detail {
+        grid-column: auto;
       }
     }
 
@@ -3026,6 +3298,10 @@
       z-index: 150;
     }
 
+    .record-delete-confirm-modal {
+      z-index: 380;
+    }
+
     #option-manager-modal {
       z-index: 260;
     }
@@ -3127,6 +3403,10 @@
       justify-content: flex-end;
       gap: 8px;
       margin-top: 14px;
+    }
+
+    .record-delete-button {
+      margin-right: auto;
     }
 
     @supports (-webkit-touch-callout: none) {
@@ -3465,7 +3745,7 @@
 
           <section class="login-drive-panel" aria-labelledby="login-drive-title">
             <h2 id="login-drive-title">Google Drive</h2>
-            <p>Conecte o Google Drive antes de entrar para puxar o backup mais recente e evitar salvar por cima de dados antigos.</p>
+            <p>Conecte o Google Drive antes de entrar para puxar o snapshot e o histórico operacional mais recentes antes de usar o sistema.</p>
             <div class="login-drive-actions">
               <button class="solid-button" id="login-connect-drive-button" type="button">Conectar Google Drive</button>
             </div>
@@ -3591,11 +3871,11 @@
           <div class="panel-header">
             <div>
               <h2 class="panel-title" id="all-families-title">Todas Famílias</h2>
-              <p class="panel-description">Lista de representantes familiares cadastrados. Toque em um nome para abrir a ficha familiar em modo visualização.</p>
+              <p class="panel-description">Lista de representantes familiares cadastrados. Busque pelo representante ou por componentes familiares; toque em um nome para abrir a ficha familiar em modo visualização.</p>
             </div>
           </div>
           <div class="all-families-search">
-            <input class="home-search-input" id="all-families-search-input" type="search" placeholder="Nome do representante familiar" autocomplete="off" inputmode="search">
+            <input class="home-search-input" id="all-families-search-input" type="search" placeholder="Nome do representante ou componente familiar" autocomplete="off" inputmode="search">
           </div>
           <div class="all-families-list" id="all-families-list" aria-live="polite"></div>
         </section>
@@ -3609,6 +3889,7 @@
         <div class="family-workspace" id="family-workspace">
           <div class="family-history-tabs family-screen-tabs" id="family-screen-tabs" role="tablist" aria-label="Abas da família">
             <button class="family-history-tab active" id="family-history-tab-form" type="button" role="tab" aria-selected="true" aria-controls="family-history-panel-form" data-family-history-tab="form">Ficha familiar</button>
+            <button class="family-history-tab" id="family-history-tab-timeline" type="button" role="tab" aria-selected="false" aria-controls="family-history-panel-timeline" data-family-history-tab="timeline" hidden>Linha do tempo</button>
             <button class="family-history-tab" id="family-history-tab-resources" type="button" role="tab" aria-selected="false" aria-controls="family-history-panel-resources" data-family-history-tab="resources" hidden>Registro de recursos</button>
             <button class="family-history-tab" id="family-history-tab-evolution" type="button" role="tab" aria-selected="false" aria-controls="family-history-panel-evolution" data-family-history-tab="evolution" hidden>Evolução</button>
             <button class="family-history-tab" id="family-history-tab-appointments" type="button" role="tab" aria-selected="false" aria-controls="family-history-panel-appointments" data-family-history-tab="appointments" hidden>Agendamento</button>
@@ -3838,12 +4119,19 @@
                 <div class="family-tab-actions">
                   <button class="solid-button" id="register-resource-button" type="button" hidden>Novo registro de recursos</button>
                   <button class="solid-button" id="evolution-button" type="button" hidden>Nova evolução</button>
+                  <button class="solid-button" id="timeline-add-appointment-button" type="button" hidden>Novo agendamento</button>
                 </div>
-                <div class="family-history-filter-field">
-                  <label for="family-history-date-filter">Filtrar por data</label>
-                  <input id="family-history-date-filter" type="date" data-date-input="true" autocomplete="off" aria-label="Filtrar registros da família por data">
+                <div class="family-history-filter-field" data-filter-active="false">
+                  <label for="family-history-date-filter">Filtrar por mês/ano</label>
+                  <input id="family-history-date-filter" type="month" autocomplete="off" aria-label="Filtrar registros da família por mês e ano">
                 </div>
                 <button class="family-history-filter-clear" id="family-history-date-clear" type="button">Limpar</button>
+              </div>
+            </div>
+
+            <div class="family-history-tab-panel" id="family-history-panel-timeline" role="tabpanel" aria-labelledby="family-history-tab-timeline" data-family-history-panel="timeline" hidden>
+              <div class="family-unified-timeline" id="family-inline-unified-timeline" aria-label="Linha do tempo da família com recursos, evolução e agendamentos" aria-live="polite">
+                <div class="empty-note family-unified-timeline-empty">Nenhum registro encontrado na linha do tempo.</div>
               </div>
             </div>
 
@@ -4082,7 +4370,7 @@
         <div class="settings-grid">
           <section class="settings-section" aria-labelledby="drive-title">
             <h2 id="drive-title">Google Drive</h2>
-            <p>O app salva um backup legível em JSON na pasta interna do aplicativo no Google Drive.</p>
+            <p>O app salva um snapshot consolidado em JSON e um histórico operacional de alterações no Google Drive. O horário confirmado pelo Drive é usado para decidir a alteração mais recente em conflitos.</p>
             <div class="settings-actions">
               <button class="solid-button" id="connect-drive-button" type="button">Conectar Google Drive</button>
               <button class="plain-button" id="sync-now-button" type="button">Sincronizar agora</button>
@@ -4126,11 +4414,6 @@
             <div class="status-line" id="delete-all-records-status" data-state="idle" role="status"></div>
           </section>
 
-          <section class="settings-section" aria-labelledby="data-title">
-            <h2 id="data-title">Modelo de dados</h2>
-            <p>Prévia do estado salvo. Este modelo aceita novas coleções, campos e metadados sem depender de uma tabela rígida.</p>
-            <pre class="data-preview" id="data-preview" aria-label="Prévia dos dados salvos"></pre>
-          </section>
         </div>
       </section>
     </main>
@@ -4361,6 +4644,7 @@
           <span class="resource-status-line" id="resource-record-edit-status" data-state="idle" role="status"></span>
         </section>
         <div class="modal-actions">
+          <button class="danger-button record-delete-button" id="resource-record-delete-button" type="button" hidden>Apagar</button>
           <button class="plain-button" id="resource-record-edit-cancel" type="button">Cancelar</button>
           <button class="solid-button" type="submit">Salvar alterações</button>
         </div>
@@ -4396,6 +4680,7 @@
           <span class="resource-status-line" id="evolution-record-edit-status" data-state="idle" role="status"></span>
         </section>
         <div class="modal-actions">
+          <button class="danger-button record-delete-button" id="evolution-record-delete-button" type="button" hidden>Apagar</button>
           <button class="plain-button" id="evolution-record-edit-cancel" type="button">Cancelar</button>
           <button class="solid-button" type="submit">Salvar alterações</button>
         </div>
@@ -4433,6 +4718,7 @@
           <span class="status-line" id="appointment-record-edit-status" data-state="idle" role="status"></span>
         </section>
         <div class="modal-actions">
+          <button class="danger-button record-delete-button" id="appointment-record-delete-button" type="button" hidden>Apagar</button>
           <button class="plain-button" id="appointment-record-edit-cancel" type="button">Cancelar</button>
           <button class="solid-button" type="submit">Salvar alterações</button>
         </div>
@@ -4440,6 +4726,17 @@
     </div>
   </div>
 
+
+  <div class="modal-backdrop record-delete-confirm-modal" id="record-delete-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="record-delete-confirm-title" aria-describedby="record-delete-confirm-description">
+    <div class="modal-dialog">
+      <h2 id="record-delete-confirm-title">Apagar registro?</h2>
+      <p id="record-delete-confirm-description">Esta ação removerá o registro selecionado da ficha familiar. Confirme para apagar.</p>
+      <div class="modal-actions">
+        <button class="plain-button" id="record-delete-confirm-cancel" type="button">Cancelar</button>
+        <button class="danger-button" id="record-delete-confirm-action" type="button">Confirmar apagamento</button>
+      </div>
+    </div>
+  </div>
 
   <div class="modal-backdrop" id="edit-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="edit-confirm-title">
     <div class="modal-dialog">
@@ -4479,7 +4776,9 @@
       clientId: '956584687010-j1ito94g76aniq738tkikvrj1tui6f9f.apps.googleusercontent.com',
       scope: 'https://www.googleapis.com/auth/drive.appdata',
       fileName: 'sistema-acompanhamento-familias-backup.json',
-      fileMimeType: 'application/json'
+      fileMimeType: 'application/json',
+      operationFilePrefix: 'saf-operation-',
+      operationFileSuffix: '.json'
     };
 
     const screens = document.querySelectorAll('.screen');
@@ -4620,11 +4919,13 @@
     const familyHistoryToolbar = document.querySelector('#family-linked-history-panel .family-history-toolbar');
     const familyHistoryDateFilter = document.querySelector('#family-history-date-filter');
     const familyHistoryDateClear = document.querySelector('#family-history-date-clear');
+    const familyInlineUnifiedTimeline = document.querySelector('#family-inline-unified-timeline');
     const familyInlineResourceTimeline = document.querySelector('#family-inline-resource-timeline');
     const familyInlineEvolutionTimeline = document.querySelector('#family-inline-evolution-timeline');
     const familyInlineAppointmentList = document.querySelector('#family-inline-appointment-list');
     const familyAppointmentMonthLabel = document.querySelector('#family-appointment-month-label');
     const familyAddAppointmentButton = document.querySelector('#family-add-appointment-button');
+    const timelineAddAppointmentButton = document.querySelector('#timeline-add-appointment-button');
     const familyAppointmentPrevMonthButton = document.querySelector('#family-appointment-prev-month');
     const familyAppointmentNextMonthButton = document.querySelector('#family-appointment-next-month');
     const familyHistoryTabButtons = document.querySelectorAll('[data-family-history-tab]');
@@ -4645,6 +4946,7 @@
     const editResourceAddItemOptionButton = document.querySelector('#edit-resource-add-item-option');
     const resourceRecordEditStatus = document.querySelector('#resource-record-edit-status');
     const resourceRecordEditCancelButton = document.querySelector('#resource-record-edit-cancel');
+    const resourceRecordDeleteButton = document.querySelector('#resource-record-delete-button');
     const evolutionRecordEditModal = document.querySelector('#evolution-record-edit-modal');
     const evolutionRecordEditForm = document.querySelector('#evolution-record-edit-form');
     const evolutionRecordEditTitle = document.querySelector('#evolution-record-edit-title');
@@ -4655,6 +4957,7 @@
     const editEvolutionFormatButtons = document.querySelectorAll('[data-edit-evolution-command]');
     const evolutionRecordEditStatus = document.querySelector('#evolution-record-edit-status');
     const evolutionRecordEditCancelButton = document.querySelector('#evolution-record-edit-cancel');
+    const evolutionRecordDeleteButton = document.querySelector('#evolution-record-delete-button');
     const appointmentRecordEditModal = document.querySelector('#appointment-record-edit-modal');
     const appointmentRecordEditForm = document.querySelector('#appointment-record-edit-form');
     const appointmentRecordEditTitle = document.querySelector('#appointment-record-edit-title');
@@ -4665,6 +4968,12 @@
     const editAppointmentDescriptionInput = document.querySelector('#edit-appointment-description');
     const appointmentRecordEditStatus = document.querySelector('#appointment-record-edit-status');
     const appointmentRecordEditCancelButton = document.querySelector('#appointment-record-edit-cancel');
+    const appointmentRecordDeleteButton = document.querySelector('#appointment-record-delete-button');
+    const recordDeleteConfirmModal = document.querySelector('#record-delete-confirm-modal');
+    const recordDeleteConfirmTitle = document.querySelector('#record-delete-confirm-title');
+    const recordDeleteConfirmDescription = document.querySelector('#record-delete-confirm-description');
+    const recordDeleteConfirmCancelButton = document.querySelector('#record-delete-confirm-cancel');
+    const recordDeleteConfirmActionButton = document.querySelector('#record-delete-confirm-action');
     const evolutionFormatButtons = document.querySelectorAll('[data-evolution-command]');
     const memberDetailsModal = document.querySelector('#member-details-modal');
     const memberDetailsCloseButton = document.querySelector('#member-details-close');
@@ -4863,7 +5172,7 @@
     function createDefaultState() {
       return {
         appName: 'Sistema de Acompanhamento de Famílias',
-        schemaVersion: 1,
+        schemaVersion: 2,
         updatedAt: new Date().toISOString(),
         updatedBy: getDeviceId(),
         collections: {
@@ -4887,7 +5196,15 @@
           notes: 'Modelo flexível em JSON para permitir novos campos e coleções.',
           optionSets: cloneDefaultOptionSets()
         },
-        extensions: {}
+        extensions: {
+          sync: {
+            strategy: 'audit-log-drive-operations',
+            timeSource: 'google_drive',
+            operationFilePrefix: googleDriveConfig.operationFilePrefix,
+            lastSyncAt: '',
+            lastCompactedAt: ''
+          }
+        }
       };
     }
 
@@ -4934,7 +5251,11 @@
         },
         extensions: {
           ...baseState.extensions,
-          ...(safeState.extensions || {})
+          ...(safeState.extensions || {}),
+          sync: {
+            ...(baseState.extensions.sync || {}),
+            ...(safeState.extensions?.sync || {})
+          }
         }
       };
     }
@@ -4949,6 +5270,7 @@
         markStateUpdated();
       }
 
+      normalizeAuditLogsInState(appState);
       localStorage.setItem(storageKey, JSON.stringify(appState));
       renderApp();
 
@@ -4970,6 +5292,7 @@
 
       try {
         appState = normalizeState(JSON.parse(savedState));
+        normalizeAuditLogsInState(appState);
       } catch (error) {
         console.warn('Não foi possível carregar o storage local.', error);
         appState = createDefaultState();
@@ -4980,6 +5303,7 @@
     function applyLoadedState(remoteState) {
       isApplyingRemoteState = true;
       appState = normalizeState(remoteState);
+      normalizeAuditLogsInState(appState);
       localStorage.setItem(storageKey, JSON.stringify(appState));
       isApplyingRemoteState = false;
       renderApp();
@@ -5083,12 +5407,387 @@
       return merged;
     }
 
+    function getCollectionNameForEntityType(entityType = '') {
+      const normalized = String(entityType || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLocaleLowerCase('pt-BR')
+        .trim();
+
+      if (normalized.includes('ficha') || normalized.includes('familia')) {
+        return 'families';
+      }
+
+      if (normalized.includes('agendamento')) {
+        return 'appointments';
+      }
+
+      if (normalized.includes('recurso') || normalized.includes('doacao') || normalized.includes('servico')) {
+        return 'resourceRecords';
+      }
+
+      if (normalized.includes('evolucao')) {
+        return 'evolutionRecords';
+      }
+
+      if (normalized.includes('usuario')) {
+        return 'users';
+      }
+
+      if (normalized.includes('formulario') || normalized.includes('cadastro-familiar')) {
+        return 'forms';
+      }
+
+      if (normalized.includes('linha do tempo')) {
+        return 'timelineEvents';
+      }
+
+      return '';
+    }
+
+    function normalizeOperationId(log = {}) {
+      return log.operationId || log.id || createId('op');
+    }
+
+    function getOperationSortTime(operation = {}) {
+      return String(operation.driveCreatedAt || operation.serverCreatedAt || operation.syncedAt || operation.localCreatedAt || operation.createdAt || '');
+    }
+
+    function compareOperations(a = {}, b = {}) {
+      const timeA = getOperationSortTime(a);
+      const timeB = getOperationSortTime(b);
+
+      if (timeA !== timeB) {
+        return timeA.localeCompare(timeB);
+      }
+
+      return String(normalizeOperationId(a)).localeCompare(String(normalizeOperationId(b)));
+    }
+
+    function getAuditSyncStatusLabel(log = {}) {
+      if (log.syncStatus === 'synced') {
+        return 'Sincronizado com Drive';
+      }
+
+      if (log.syncStatus === 'error') {
+        return 'Erro de sincronização';
+      }
+
+      return 'Pendente de sincronização';
+    }
+
+    function getAuditChangeStatusLabel(change = {}) {
+      if (change.conflict && change.persisted === false) {
+        return 'Substituída por alteração mais recente';
+      }
+
+      if (change.conflict && change.persisted !== false) {
+        return 'Valor atual após conflito';
+      }
+
+      return change.persisted === false ? 'Substituída' : 'Valor atual';
+    }
+
+    function normalizeAuditLogEntry(log = {}) {
+      const operationId = normalizeOperationId(log);
+      const localCreatedAt = log.localCreatedAt || log.createdAt || new Date().toISOString();
+      const normalizedChanges = Array.isArray(log.changes)
+        ? log.changes.map(normalizeAuditChange).filter((change) => change.label)
+        : [];
+
+      return {
+        ...log,
+        id: log.id || createId('audit'),
+        operationId,
+        createdAt: log.createdAt || localCreatedAt,
+        localCreatedAt,
+        driveCreatedAt: log.driveCreatedAt || log.serverCreatedAt || '',
+        driveModifiedAt: log.driveModifiedAt || '',
+        timeSource: log.timeSource || (log.driveCreatedAt ? 'google_drive' : 'device_pending_google_drive'),
+        syncStatus: log.syncStatus || (log.driveCreatedAt ? 'synced' : 'pending'),
+        deviceId: log.deviceId || getDeviceId(),
+        changes: normalizedChanges,
+        newRecord: normalizeAuditFields(log.newRecord || []),
+        fullRecordRaw: Object.prototype.hasOwnProperty.call(log, 'fullRecordRaw') ? cloneStateValue(log.fullRecordRaw) : null
+      };
+    }
+
+    function normalizeAuditLogsInState(state) {
+      if (!state.collections || typeof state.collections !== 'object') {
+        state.collections = createDefaultState().collections;
+      }
+
+      if (!Array.isArray(state.collections.auditLogs)) {
+        state.collections.auditLogs = [];
+      }
+
+      state.collections.auditLogs = mergeAuditLogs([], state.collections.auditLogs);
+      annotateAuditConflicts(state.collections.auditLogs);
+      return state.collections.auditLogs;
+    }
+
+    function mergeAuditLogs(...logGroups) {
+      const merged = new Map();
+
+      logGroups.flat().filter(Boolean).forEach((log) => {
+        const normalizedLog = normalizeAuditLogEntry(log);
+        const key = normalizedLog.operationId || normalizedLog.id;
+        const current = merged.get(key);
+
+        if (!current) {
+          merged.set(key, normalizedLog);
+          return;
+        }
+
+        const currentScore = [current.driveCreatedAt ? 1 : 0, current.syncStatus === 'synced' ? 1 : 0, current.updatedAt || current.createdAt || ''].join('|');
+        const candidateScore = [normalizedLog.driveCreatedAt ? 1 : 0, normalizedLog.syncStatus === 'synced' ? 1 : 0, normalizedLog.updatedAt || normalizedLog.createdAt || ''].join('|');
+
+        if (candidateScore >= currentScore) {
+          merged.set(key, {
+            ...current,
+            ...normalizedLog,
+            changes: normalizedLog.changes.length ? normalizedLog.changes : current.changes,
+            newRecord: normalizedLog.newRecord.length ? normalizedLog.newRecord : current.newRecord,
+            fullRecordRaw: normalizedLog.fullRecordRaw || current.fullRecordRaw
+          });
+        }
+      });
+
+      return [...merged.values()].sort(compareOperations);
+    }
+
+    function getChangeConflictKey(operation = {}, change = {}) {
+      if (!operation.entityType || !operation.entityId || !change.fieldPath) {
+        return '';
+      }
+
+      return [operation.entityType, operation.entityId, change.fieldPath].join('::');
+    }
+
+    function annotateAuditConflicts(logs = []) {
+      const sortedLogs = [...logs].sort(compareOperations);
+      const latestByField = new Map();
+      const logByOperationId = new Map(logs.map((log) => [normalizeOperationId(log), log]));
+
+      logs.forEach((log) => {
+        (log.changes || []).forEach((change) => {
+          change.persisted = true;
+          change.conflict = false;
+          change.overriddenBy = null;
+        });
+      });
+
+      sortedLogs.forEach((log) => {
+        (log.changes || []).forEach((change) => {
+          const key = getChangeConflictKey(log, change);
+
+          if (!key) {
+            return;
+          }
+
+          const previous = latestByField.get(key);
+
+          if (previous) {
+            const previousLog = logByOperationId.get(previous.operationId);
+            const previousChange = previousLog?.changes?.[previous.changeIndex];
+
+            if (previousChange) {
+              previousChange.persisted = false;
+              previousChange.conflict = true;
+              previousChange.overriddenBy = normalizeOperationId(log);
+            }
+
+            change.conflict = true;
+            change.persisted = true;
+          }
+
+          latestByField.set(key, {
+            operationId: normalizeOperationId(log),
+            changeIndex: log.changes.indexOf(change)
+          });
+        });
+      });
+    }
+
+    function getValueByPath(target, path) {
+      if (!target || !path) {
+        return undefined;
+      }
+
+      return String(path).split('.').reduce((value, key) => {
+        if (value === null || value === undefined) {
+          return undefined;
+        }
+
+        return value[key];
+      }, target);
+    }
+
+    function setValueByPath(target, path, value) {
+      if (!target || !path) {
+        return;
+      }
+
+      const parts = String(path).split('.').filter(Boolean);
+      let cursor = target;
+
+      parts.forEach((part, index) => {
+        const isLast = index === parts.length - 1;
+        const nextPart = parts[index + 1];
+        const shouldBeArray = /^\d+$/.test(nextPart || '');
+
+        if (isLast) {
+          cursor[part] = cloneStateValue(value);
+          return;
+        }
+
+        if (cursor[part] === undefined || cursor[part] === null || typeof cursor[part] !== 'object') {
+          cursor[part] = shouldBeArray ? [] : {};
+        }
+
+        cursor = cursor[part];
+      });
+    }
+
+    function findEntityByOperation(state, operation = {}) {
+      const collectionName = getCollectionNameForEntityType(operation.entityType);
+
+      if (!collectionName || !operation.entityId) {
+        return null;
+      }
+
+      if (collectionName === 'users') {
+        return (state.security?.users || []).find((user) => user.id === operation.entityId) || null;
+      }
+
+      return (state.collections?.[collectionName] || []).find((record) => record.id === operation.entityId) || null;
+    }
+
+    function ensureEntityFromOperation(state, operation = {}) {
+      let entity = findEntityByOperation(state, operation);
+
+      if (entity || !operation.fullRecordRaw || !operation.entityId) {
+        return entity;
+      }
+
+      const collectionName = getCollectionNameForEntityType(operation.entityType);
+      const clonedRecord = cloneStateValue(operation.fullRecordRaw);
+
+      if (!clonedRecord || typeof clonedRecord !== 'object') {
+        return null;
+      }
+
+      if (collectionName === 'users') {
+        if (!state.security) {
+          state.security = { users: [] };
+        }
+        if (!Array.isArray(state.security.users)) {
+          state.security.users = [];
+        }
+        state.security.users.push(clonedRecord);
+        return clonedRecord;
+      }
+
+      if (!collectionName) {
+        return null;
+      }
+
+      if (!state.collections || typeof state.collections !== 'object') {
+        state.collections = createDefaultState().collections;
+      }
+      if (!Array.isArray(state.collections[collectionName])) {
+        state.collections[collectionName] = [];
+      }
+      state.collections[collectionName].push(clonedRecord);
+      return clonedRecord;
+    }
+
+    function refreshDerivedStateRecords(state) {
+      const families = state.collections?.families || [];
+      const forms = state.collections?.forms || [];
+      const timelineEvents = state.collections?.timelineEvents || [];
+
+      families.forEach((family) => {
+        family.title = family.identificacao?.nome || family.title || 'Família sem nome';
+        const formRecord = forms.find((form) => form.familyId === family.id);
+
+        if (formRecord) {
+          formRecord.title = family.title;
+          formRecord.date = family.cadastro?.dataCadastro || formRecord.date;
+          formRecord.totals = {
+            integrantes: family.renda?.totalMembros || 0,
+            rendaTotal: family.renda?.totalRenda || 0,
+            rendaPerCapita: family.renda?.rendaPerCapita || 0
+          };
+        }
+
+        const cadastroEvent = timelineEvents.find((event) => event.familyId === family.id && event.type === 'cadastro-familiar');
+        if (cadastroEvent) {
+          cadastroEvent.title = `Cadastro familiar: ${family.title}`;
+          cadastroEvent.familyTitle = family.title;
+          cadastroEvent.date = family.cadastro?.dataCadastro || cadastroEvent.date;
+        }
+      });
+
+      (state.collections?.appointments || []).forEach((appointment) => {
+        const family = families.find((item) => item.id === appointment.familyId);
+        if (family) {
+          appointment.familyTitle = getFamilyRepresentativeName(family) || appointment.familyTitle || '';
+          appointment.title = `Agendamento: ${appointment.familyTitle || 'família sem nome'}`;
+        }
+      });
+    }
+
+    function rebuildStateFromSnapshotAndOperations(snapshotCandidate, operations = []) {
+      const state = normalizeState(snapshotCandidate);
+      const mergedLogs = mergeAuditLogs(state.collections.auditLogs || [], operations || []);
+      const sortedLogs = [...mergedLogs].sort(compareOperations);
+
+      sortedLogs.forEach((operation) => {
+        const entity = ensureEntityFromOperation(state, operation);
+
+        if (!entity || operation.changeType !== 'edit') {
+          return;
+        }
+
+        (operation.changes || []).forEach((change) => {
+          if (!change.fieldPath) {
+            return;
+          }
+
+          setValueByPath(entity, change.fieldPath, change.afterRaw);
+        });
+
+        entity.updatedAt = getOperationSortTime(operation) || entity.updatedAt || new Date().toISOString();
+      });
+
+      state.collections.auditLogs = mergedLogs;
+      annotateAuditConflicts(state.collections.auditLogs);
+      refreshDerivedStateRecords(state);
+      state.schemaVersion = Math.max(Number(state.schemaVersion) || 1, 2);
+      state.updatedAt = new Date().toISOString();
+      state.updatedBy = getDeviceId();
+      state.extensions = {
+        ...(state.extensions || {}),
+        sync: {
+          ...(state.extensions?.sync || {}),
+          strategy: 'audit-log-drive-operations',
+          timeSource: 'google_drive',
+          lastSyncAt: new Date().toISOString()
+        }
+      };
+
+      return normalizeState(state);
+    }
+
     function mergeStatesForDriveSync(remoteStateCandidate, localStateCandidate, options = {}) {
       const remoteState = normalizeState(remoteStateCandidate);
       const localState = normalizeState(localStateCandidate);
 
       if (options.forceOverwrite) {
-        return normalizeState(localState);
+        const overwrittenState = normalizeState(localState);
+        normalizeAuditLogsInState(overwrittenState);
+        return rebuildStateFromSnapshotAndOperations(overwrittenState, overwrittenState.collections.auditLogs || []);
       }
 
       const remoteTime = Date.parse(remoteState.updatedAt || '') || 0;
@@ -5129,14 +5828,17 @@
         }
       });
 
-      mergedState.updatedAt = new Date().toISOString();
-      mergedState.updatedBy = getDeviceId();
-      return mergedState;
+      mergedState.collections.auditLogs = mergeAuditLogs(remoteState.collections?.auditLogs || [], localState.collections?.auditLogs || []);
+      const rebuiltState = rebuildStateFromSnapshotAndOperations(mergedState, mergedState.collections.auditLogs);
+      rebuiltState.updatedAt = new Date().toISOString();
+      rebuiltState.updatedBy = getDeviceId();
+      return rebuiltState;
     }
 
     function applyMergedStateAfterDriveSync(mergedState) {
       isApplyingRemoteState = true;
       appState = normalizeState(mergedState);
+      normalizeAuditLogsInState(appState);
       localStorage.setItem(storageKey, JSON.stringify(appState));
       isApplyingRemoteState = false;
       renderApp();
@@ -5356,7 +6058,9 @@
       renderReports();
       renderManagedOptionSelects();
       updateFamilyComputedFields();
-      dataPreview.textContent = JSON.stringify(createDisplayPreviewState(appState), null, 2);
+      if (dataPreview) {
+        dataPreview.textContent = JSON.stringify(createDisplayPreviewState(appState), null, 2);
+      }
     }
 
     function getCurrentMonthValue() {
@@ -5594,9 +6298,10 @@
     function collectAppointmentRecordChanges(originalRecord, updatedRecord) {
       const changes = [];
 
-      addChange(changes, 'Data', originalRecord.date || '', updatedRecord.date || '', 'date');
-      addChange(changes, 'Representante familiar', originalRecord.familyTitle || '', updatedRecord.familyTitle || '');
-      addChange(changes, 'Descrição', originalRecord.description || '', updatedRecord.description || '');
+      addChange(changes, 'Data', originalRecord.date || '', updatedRecord.date || '', 'date', 'date');
+      addChange(changes, 'Representante familiar', originalRecord.familyTitle || '', updatedRecord.familyTitle || '', 'text', 'familyTitle');
+      addChange(changes, 'Código da família', originalRecord.familyId || '', updatedRecord.familyId || '', 'text', 'familyId');
+      addChange(changes, 'Descrição', originalRecord.description || '', updatedRecord.description || '', 'text', 'description');
 
       return changes;
     }
@@ -5695,11 +6400,222 @@
       element.dataset.state = state;
     }
 
+    function setRecordDeleteButtonVisible(button, isVisible) {
+      if (!button) {
+        return;
+      }
+
+      button.hidden = !isVisible;
+      button.disabled = !isVisible;
+    }
+
+    function closeRecordDeleteConfirmModal() {
+      recordDeleteConfirmModal?.classList.remove('visible');
+      pendingRecordDelete = null;
+    }
+
+    function resolveRecordDeleteTarget(kind, explicitId = '') {
+      const normalizedKind = String(kind || '').trim();
+      const id = explicitId || (
+        normalizedKind === 'resource'
+          ? activeEditingResourceRecordId
+          : normalizedKind === 'evolution'
+            ? activeEditingEvolutionRecordId
+            : normalizedKind === 'appointment'
+              ? activeEditingAppointmentId
+              : ''
+      );
+
+      if (normalizedKind === 'resource') {
+        const record = (appState.collections.resourceRecords || []).find((item) => item.id === id) || null;
+        return {
+          kind: normalizedKind,
+          id,
+          record,
+          statusElement: resourceRecordEditStatus,
+          title: 'Apagar registro de recurso?',
+          missingMessage: 'Não foi possível localizar o registro de recurso para apagar.',
+          description: record
+            ? `Você está prestes a apagar o registro de recurso “${record.title || record.servico || record.item || 'sem título'}”${record.date ? ` de ${formatDisplayDate(record.date)}` : ''}. Esta ação não pode ser desfeita.`
+            : 'Este registro de recurso não foi localizado.'
+        };
+      }
+
+      if (normalizedKind === 'evolution') {
+        const record = (appState.collections.evolutionRecords || []).find((item) => item.id === id) || null;
+        return {
+          kind: normalizedKind,
+          id,
+          record,
+          statusElement: evolutionRecordEditStatus,
+          title: 'Apagar evolução?',
+          missingMessage: 'Não foi possível localizar a evolução para apagar.',
+          description: record
+            ? `Você está prestes a apagar a evolução${record.date ? ` de ${formatDisplayDate(record.date)}` : ''}. Esta ação não pode ser desfeita.`
+            : 'Esta evolução não foi localizada.'
+        };
+      }
+
+      if (normalizedKind === 'appointment') {
+        const record = (appState.collections.appointments || []).find((item) => item.id === id) || null;
+        return {
+          kind: normalizedKind,
+          id,
+          record,
+          statusElement: appointmentRecordEditStatus,
+          title: 'Apagar agendamento?',
+          missingMessage: 'Não foi possível localizar o agendamento para apagar.',
+          description: record
+            ? `Você está prestes a apagar o agendamento “${record.description || 'sem descrição'}”${record.date ? ` de ${formatDisplayDate(record.date)}` : ''}. Esta ação não pode ser desfeita.`
+            : 'Este agendamento não foi localizado.'
+        };
+      }
+
+      return null;
+    }
+
+    function openRecordDeleteConfirm(kind) {
+      const target = resolveRecordDeleteTarget(kind);
+
+      if (!target?.record) {
+        if (target?.statusElement) {
+          setRecordEditStatus(target.statusElement, target.missingMessage || 'Não foi possível localizar o registro para apagar.', 'error');
+        }
+        return;
+      }
+
+      pendingRecordDelete = { kind: target.kind, id: target.id };
+
+      if (recordDeleteConfirmTitle) {
+        recordDeleteConfirmTitle.textContent = target.title;
+      }
+
+      if (recordDeleteConfirmDescription) {
+        recordDeleteConfirmDescription.textContent = target.description;
+      }
+
+      recordDeleteConfirmModal?.classList.add('visible');
+      setTimeout(() => recordDeleteConfirmActionButton?.focus(), 0);
+    }
+
+    function removeTimelineEventsForDeletedRecord(kind, recordId) {
+      if (!Array.isArray(appState.collections.timelineEvents)) {
+        appState.collections.timelineEvents = [];
+        return;
+      }
+
+      if (kind === 'resource') {
+        appState.collections.timelineEvents = appState.collections.timelineEvents.filter((event) => event.resourceRecordId !== recordId);
+        return;
+      }
+
+      if (kind === 'evolution') {
+        appState.collections.timelineEvents = appState.collections.timelineEvents.filter((event) => event.evolutionRecordId !== recordId);
+        return;
+      }
+
+      if (kind === 'appointment') {
+        appState.collections.timelineEvents = appState.collections.timelineEvents.filter((event) => event.appointmentId !== recordId && event.appointmentRecordId !== recordId);
+      }
+    }
+
+    function showRecordDeleteSuccess(message, secondaryStatusElement = null) {
+      if (familyFormStatus) {
+        familyFormStatus.textContent = message;
+        familyFormStatus.dataset.state = 'success';
+      }
+
+      if (secondaryStatusElement) {
+        setRecordEditStatus(secondaryStatusElement, message, 'success');
+      }
+    }
+
+    function confirmRecordDelete() {
+      if (!pendingRecordDelete?.kind || !pendingRecordDelete?.id) {
+        closeRecordDeleteConfirmModal();
+        return;
+      }
+
+      const target = resolveRecordDeleteTarget(pendingRecordDelete.kind, pendingRecordDelete.id);
+
+      if (!target?.record) {
+        if (target?.statusElement) {
+          setRecordEditStatus(target.statusElement, target.missingMessage || 'Não foi possível localizar o registro para apagar.', 'error');
+        }
+        closeRecordDeleteConfirmModal();
+        return;
+      }
+
+      const { kind, id, record } = target;
+      let successMessage = 'Registro apagado com sucesso.';
+      let secondaryStatusElement = null;
+
+      if (kind === 'resource') {
+        addAuditLog({
+          action: 'Apagou recurso',
+          changeType: 'delete',
+          entityType: 'Registro de recursos',
+          entityId: record.id,
+          familyId: record.familyId,
+          familyTitle: record.familyTitle || '',
+          title: `Recurso apagado: ${record.title || record.servico || record.item || 'registro sem título'}`,
+          newRecord: createResourceAuditFields(record)
+        });
+        appState.collections.resourceRecords = (appState.collections.resourceRecords || []).filter((item) => item.id !== id);
+        removeTimelineEventsForDeletedRecord(kind, id);
+        closeRecordDeleteConfirmModal();
+        closeResourceEditModal();
+        successMessage = 'Registro de recurso apagado com sucesso.';
+        secondaryStatusElement = resourceFormStatus;
+      } else if (kind === 'evolution') {
+        addAuditLog({
+          action: 'Apagou evolução',
+          changeType: 'delete',
+          entityType: 'Evolução',
+          entityId: record.id,
+          familyId: record.familyId,
+          familyTitle: record.familyTitle || '',
+          title: `Evolução apagada: ${record.familyTitle || 'família sem nome'}`,
+          newRecord: createEvolutionAuditFields(record)
+        });
+        appState.collections.evolutionRecords = (appState.collections.evolutionRecords || []).filter((item) => item.id !== id);
+        removeTimelineEventsForDeletedRecord(kind, id);
+        closeRecordDeleteConfirmModal();
+        closeEvolutionEditModal();
+        successMessage = 'Evolução apagada com sucesso.';
+        secondaryStatusElement = evolutionFormStatus;
+      } else if (kind === 'appointment') {
+        addAuditLog({
+          action: 'Apagou agendamento',
+          changeType: 'delete',
+          entityType: 'Agendamento',
+          entityId: record.id,
+          familyId: record.familyId,
+          familyTitle: record.familyTitle || '',
+          title: `Agendamento apagado: ${record.familyTitle || 'família sem nome'}`,
+          newRecord: createAppointmentAuditFields(record)
+        });
+        appState.collections.appointments = (appState.collections.appointments || []).filter((item) => item.id !== id);
+        removeTimelineEventsForDeletedRecord(kind, id);
+        closeRecordDeleteConfirmModal();
+        closeAppointmentEditModal();
+        successMessage = 'Agendamento apagado com sucesso.';
+        secondaryStatusElement = appointmentFormStatus;
+      }
+
+      saveAppState();
+      showRecordDeleteSuccess(successMessage, secondaryStatusElement);
+    }
+
     function closeResourceEditModal() {
+      if (pendingRecordDelete?.kind === 'resource') {
+        closeRecordDeleteConfirmModal();
+      }
       resourceRecordEditModal?.classList.remove('visible');
       resetEditResourceExtraLines();
       resourceRecordEditForm?.reset();
       activeEditingResourceRecordId = null;
+      setRecordDeleteButtonVisible(resourceRecordDeleteButton, false);
       setRecordEditStatus(resourceRecordEditStatus, '', 'idle');
     }
 
@@ -5905,6 +6821,8 @@
         resourceRecordEditSubmitButton.textContent = 'Salvar registro';
       }
 
+      setRecordDeleteButtonVisible(resourceRecordDeleteButton, false);
+
       if (editResourceTypeSelect) {
         editResourceTypeSelect.value = 'servico';
       }
@@ -5943,6 +6861,7 @@
         resourceRecordEditSubmitButton.textContent = 'Salvar alterações';
       }
 
+      setRecordDeleteButtonVisible(resourceRecordDeleteButton, true);
       fillResourceEditModalFromRecord(record);
       setRecordEditStatus(resourceRecordEditStatus, 'Edite o registro selecionado e salve as alterações.', 'idle');
       resourceRecordEditModal?.classList.add('visible');
@@ -6147,12 +7066,16 @@
     }
 
     function closeEvolutionEditModal() {
+      if (pendingRecordDelete?.kind === 'evolution') {
+        closeRecordDeleteConfirmModal();
+      }
       evolutionRecordEditModal?.classList.remove('visible');
       evolutionRecordEditForm?.reset();
       if (editEvolutionEditor) {
         editEvolutionEditor.innerHTML = '';
       }
       activeEditingEvolutionRecordId = null;
+      setRecordDeleteButtonVisible(evolutionRecordDeleteButton, false);
       setRecordEditStatus(evolutionRecordEditStatus, '', 'idle');
     }
 
@@ -6211,6 +7134,8 @@
         evolutionRecordEditSubmitButton.textContent = 'Salvar evolução';
       }
 
+      setRecordDeleteButtonVisible(evolutionRecordDeleteButton, false);
+
       updateEditEvolutionToolbarState();
       setRecordEditStatus(evolutionRecordEditStatus, 'Preencha a nova evolução e salve.', 'idle');
       evolutionRecordEditModal?.classList.add('visible');
@@ -6240,6 +7165,8 @@
       if (evolutionRecordEditSubmitButton) {
         evolutionRecordEditSubmitButton.textContent = 'Salvar alterações';
       }
+
+      setRecordDeleteButtonVisible(evolutionRecordDeleteButton, true);
 
       if (editEvolutionEditor) {
         editEvolutionEditor.dataset.placeholder = 'Edite a evolução da família.';
@@ -6406,9 +7333,13 @@
     }
 
     function closeAppointmentEditModal() {
+      if (pendingRecordDelete?.kind === 'appointment') {
+        closeRecordDeleteConfirmModal();
+      }
       appointmentRecordEditModal?.classList.remove('visible');
       appointmentRecordEditForm?.reset();
       activeEditingAppointmentId = null;
+      setRecordDeleteButtonVisible(appointmentRecordDeleteButton, false);
       if (editAppointmentFamilySelect) {
         editAppointmentFamilySelect.disabled = false;
         editAppointmentFamilySelect.removeAttribute('aria-disabled');
@@ -6458,6 +7389,7 @@
         appointmentRecordEditSubmitButton.textContent = 'Salvar agendamento';
       }
 
+      setRecordDeleteButtonVisible(appointmentRecordDeleteButton, false);
       renderFamilySelectOptions(editAppointmentFamilySelect, { includeAll: false, selectedValue: selectedFamilyId });
 
       if (editAppointmentDateInput) {
@@ -6514,6 +7446,7 @@
         appointmentRecordEditSubmitButton.textContent = 'Salvar alterações';
       }
 
+      setRecordDeleteButtonVisible(appointmentRecordDeleteButton, true);
       fillAppointmentEditModalFromRecord(record);
       setRecordEditStatus(appointmentRecordEditStatus, 'Edite o agendamento selecionado e salve as alterações.', 'idle');
       appointmentRecordEditModal?.classList.add('visible');
@@ -6592,6 +7525,9 @@
 
         closeAppointmentEditModal();
         saveAppState();
+        renderUpcomingAppointments();
+        renderAppointments();
+        renderFamilyLinkedHistory();
         return;
       }
 
@@ -6624,6 +7560,9 @@
 
       closeAppointmentEditModal();
       saveAppState();
+      renderUpcomingAppointments();
+      renderAppointments();
+      renderFamilyLinkedHistory();
     }
 
     function getSortedFamilies() {
@@ -6798,12 +7737,18 @@
         changes: [
           {
             label: 'Status',
+            fieldPath: 'status',
             before: getAppointmentStatusLabel(previousStatus, record),
-            after: getAppointmentStatusLabel(normalizedStatus, record)
+            after: getAppointmentStatusLabel(normalizedStatus, record),
+            beforeRaw: previousStatus,
+            afterRaw: normalizedStatus,
+            valueType: 'text'
           }
         ]
       });
       saveAppState();
+      renderUpcomingAppointments();
+      renderFamilyLinkedHistory();
     }
 
     function getAppointmentStatusTotals(records = []) {
@@ -7510,7 +8455,7 @@
 
       return {
         screenId: state.screenId,
-        familyHistoryTab: ['form', 'resources', 'evolution', 'appointments'].includes(state.familyHistoryTab) ? state.familyHistoryTab : 'form',
+        familyHistoryTab: ['form', 'timeline', 'resources', 'evolution', 'appointments'].includes(state.familyHistoryTab) ? state.familyHistoryTab : 'form',
         activeViewedFamilyId: state.activeViewedFamilyId || null,
         familyFormMode: ['create', 'view', 'edit'].includes(state.familyFormMode) ? state.familyFormMode : 'create'
       };
@@ -7654,7 +8599,7 @@
     function createFamilyFallbackNavigationState(tabKey = 'form') {
       return {
         screenId: 'add-family-screen',
-        familyHistoryTab: ['form', 'resources', 'evolution', 'appointments'].includes(tabKey) ? tabKey : 'form',
+        familyHistoryTab: ['form', 'timeline', 'resources', 'evolution', 'appointments'].includes(tabKey) ? tabKey : 'form',
         activeViewedFamilyId: activeViewedFamilyId || null,
         familyFormMode: activeViewedFamilyId ? 'view' : 'create'
       };
@@ -7950,6 +8895,201 @@
       return response.json();
     }
 
+    function getDriveOperationFileName(operationId) {
+      return `${googleDriveConfig.operationFilePrefix}${operationId}${googleDriveConfig.operationFileSuffix}`;
+    }
+
+    function encodeDriveQueryValue(value = '') {
+      return String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    }
+
+    async function findDriveOperationFileByName(fileName) {
+      const query = encodeURIComponent(`name='${encodeDriveQueryValue(fileName)}' and trashed=false`);
+      const response = await fetch(
+        `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=${query}&fields=files(id,name,createdTime,modifiedTime)&pageSize=1`,
+        {
+          headers: {
+            Authorization: `Bearer ${googleAccessToken}`
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Falha ao procurar operação no Google Drive.');
+      }
+
+      const data = await response.json();
+      return data.files?.[0] || null;
+    }
+
+    async function createDriveOperationFile(operation) {
+      const operationId = normalizeOperationId(operation);
+      const fileName = getDriveOperationFileName(operationId);
+      const existingFile = await findDriveOperationFileByName(fileName);
+
+      if (existingFile) {
+        return existingFile;
+      }
+
+      const operationToStore = {
+        ...normalizeAuditLogEntry(operation),
+        operationId,
+        operationDriveFileName: fileName
+      };
+      const metadata = {
+        name: fileName,
+        mimeType: googleDriveConfig.fileMimeType,
+        parents: ['appDataFolder']
+      };
+      const boundary = `familias_operation_boundary_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+      const body = [
+        `--${boundary}`,
+        'Content-Type: application/json; charset=UTF-8',
+        '',
+        JSON.stringify(metadata),
+        `--${boundary}`,
+        'Content-Type: application/json; charset=UTF-8',
+        '',
+        JSON.stringify(operationToStore, null, 2),
+        `--${boundary}--`
+      ].join('\r\n');
+
+      const response = await fetch(
+        'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,createdTime,modifiedTime',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${googleAccessToken}`,
+            'Content-Type': `multipart/related; boundary=${boundary}`
+          },
+          body
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Falha ao criar operação no Google Drive.');
+      }
+
+      return response.json();
+    }
+
+    async function listDriveOperationFiles() {
+      const files = [];
+      let pageToken = '';
+      const query = encodeURIComponent(`name contains '${encodeDriveQueryValue(googleDriveConfig.operationFilePrefix)}' and trashed=false`);
+
+      do {
+        const pageTokenParam = pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : '';
+        const response = await fetch(
+          `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=${query}&fields=nextPageToken,files(id,name,createdTime,modifiedTime)&pageSize=1000${pageTokenParam}`,
+          {
+            headers: {
+              Authorization: `Bearer ${googleAccessToken}`
+            }
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error('Falha ao listar operações no Google Drive.');
+        }
+
+        const data = await response.json();
+        files.push(...(data.files || []));
+        pageToken = data.nextPageToken || '';
+      } while (pageToken);
+
+      return files;
+    }
+
+    async function downloadDriveOperation(file) {
+      const response = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`,
+        {
+          headers: {
+            Authorization: `Bearer ${googleAccessToken}`
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Falha ao baixar operação do Google Drive.');
+      }
+
+      const operation = normalizeAuditLogEntry(await response.json());
+      operation.operationDriveFileId = file.id;
+      operation.operationDriveFileName = file.name || operation.operationDriveFileName || '';
+      operation.driveCreatedAt = operation.driveCreatedAt || file.createdTime || '';
+      operation.driveModifiedAt = operation.driveModifiedAt || file.modifiedTime || '';
+      operation.timeSource = operation.driveCreatedAt ? 'google_drive' : operation.timeSource;
+      operation.syncStatus = operation.driveCreatedAt ? 'synced' : operation.syncStatus;
+      return operation;
+    }
+
+    async function loadDriveOperations() {
+      if (!googleAccessToken) {
+        return [];
+      }
+
+      const files = await listDriveOperationFiles();
+      const operations = [];
+
+      for (const file of files) {
+        try {
+          operations.push(await downloadDriveOperation(file));
+        } catch (error) {
+          console.warn('Não foi possível carregar uma operação do Google Drive.', file, error);
+        }
+      }
+
+      return operations;
+    }
+
+    function markOperationSyncedWithDrive(operationId, driveMetadata = {}) {
+      const log = (appState.collections?.auditLogs || []).find((entry) => normalizeOperationId(entry) === operationId);
+
+      if (!log) {
+        return;
+      }
+
+      log.operationDriveFileId = driveMetadata.id || log.operationDriveFileId || '';
+      log.operationDriveFileName = driveMetadata.name || log.operationDriveFileName || getDriveOperationFileName(operationId);
+      log.driveCreatedAt = driveMetadata.createdTime || log.driveCreatedAt || '';
+      log.driveModifiedAt = driveMetadata.modifiedTime || log.driveModifiedAt || '';
+      log.timeSource = log.driveCreatedAt ? 'google_drive' : log.timeSource || 'device_pending_google_drive';
+      log.syncStatus = log.driveCreatedAt ? 'synced' : 'pending';
+    }
+
+    async function uploadPendingAuditOperationsToDrive() {
+      if (!googleAccessToken) {
+        return;
+      }
+
+      normalizeAuditLogsInState(appState);
+      const pendingLogs = (appState.collections.auditLogs || []).filter((log) => log.syncStatus !== 'synced' || !log.driveCreatedAt);
+
+      for (const log of pendingLogs) {
+        const operationId = normalizeOperationId(log);
+        try {
+          const metadata = await createDriveOperationFile(log);
+          markOperationSyncedWithDrive(operationId, metadata);
+        } catch (error) {
+          console.warn('Não foi possível sincronizar operação no Google Drive.', log, error);
+          log.syncStatus = 'error';
+        }
+      }
+
+      annotateAuditConflicts(appState.collections.auditLogs);
+      localStorage.setItem(storageKey, JSON.stringify(appState));
+    }
+
+    async function deleteDriveOperationFilesFromGoogleDrive() {
+      const files = await listDriveOperationFiles();
+
+      for (const file of files) {
+        await deleteDriveStateFile(file.id);
+      }
+    }
+
     async function createDriveStateFile(state) {
       const metadata = {
         name: googleDriveConfig.fileName,
@@ -8043,11 +9183,13 @@
           await deleteDriveStateFile(existingFile.id);
         }
 
+        await deleteDriveOperationFilesFromGoogleDrive();
+
         driveFileId = null;
         pendingDriveSave = false;
         pendingDriveSaveOptions = {};
         clearTimeout(driveSaveTimer);
-        setSyncStatus(existingFile?.id ? 'Backup do Google Drive apagado.' : 'Nenhum backup do Google Drive encontrado para apagar.', 'connected');
+        setSyncStatus(existingFile?.id ? 'Backup e histórico operacional do Google Drive apagados.' : 'Nenhum backup principal encontrado; histórico operacional do Google Drive apagado quando existente.', 'connected');
       } finally {
         isDriveBusy = false;
       }
@@ -8063,28 +9205,25 @@
       }
 
       isDriveBusy = true;
-      setSyncStatus('Puxando backup do Google Drive...', 'syncing');
+      setSyncStatus('Puxando snapshot e histórico do Google Drive...', 'syncing');
 
       try {
+        normalizeAuditLogsInState(appState);
         const existingFile = await findDriveStateFile();
 
         if (!existingFile) {
+          await uploadPendingAuditOperationsToDrive();
           await createDriveStateFile(appState);
-          setSyncStatus('Backup inicial criado no Google Drive.', 'connected');
+          setSyncStatus('Backup inicial criado no Google Drive com histórico operacional.', 'connected');
           return;
         }
 
         driveFileId = existingFile.id;
         const remoteState = normalizeState(await downloadDriveState(existingFile.id));
+        const remoteOperations = await loadDriveOperations();
+        remoteState.collections.auditLogs = mergeAuditLogs(remoteState.collections?.auditLogs || [], remoteOperations);
         const localTime = Date.parse(appState.updatedAt || '') || 0;
         const remoteTime = Date.parse(remoteState.updatedAt || '') || 0;
-
-        if (options.preferRemote) {
-          applyLoadedState(remoteState);
-          setSyncStatus('Backup do Google Drive carregado.', 'connected');
-          return;
-        }
-
         const mergedState = mergeStatesForDriveSync(remoteState, appState);
         applyMergedStateAfterDriveSync(mergedState);
 
@@ -8092,7 +9231,7 @@
           pendingDriveSave = true;
         }
 
-        setSyncStatus('Backup do Google Drive carregado e combinado com os dados locais.', 'connected');
+        setSyncStatus('Snapshot e histórico do Google Drive carregados e consolidados.', 'connected');
       } finally {
         isDriveBusy = false;
       }
@@ -8133,19 +9272,26 @@
       }
 
       isDriveBusy = true;
-      setSyncStatus(saveOptions.forceOverwrite ? 'Substituindo backup no Google Drive...' : 'Puxando backup do Google Drive antes de salvar...', 'syncing');
+      setSyncStatus(saveOptions.forceOverwrite ? 'Substituindo backup no Google Drive...' : 'Sincronizando histórico com o Google Drive...', 'syncing');
 
       try {
+        normalizeAuditLogsInState(appState);
+        await uploadPendingAuditOperationsToDrive();
+
         const existingFile = await findDriveStateFile();
         driveFileId = existingFile?.id || null;
 
         if (saveOptions.mergeBeforeSave !== false && !saveOptions.forceOverwrite && driveFileId) {
+          setSyncStatus('Puxando snapshot e operações remotas antes de salvar...', 'syncing');
           const remoteState = normalizeState(await downloadDriveState(driveFileId));
+          const remoteOperations = await loadDriveOperations();
+          remoteState.collections.auditLogs = mergeAuditLogs(remoteState.collections?.auditLogs || [], remoteOperations);
           const mergedState = mergeStatesForDriveSync(remoteState, appState);
           applyMergedStateAfterDriveSync(mergedState);
         }
 
-        setSyncStatus('Salvando backup local e Google Drive...', 'syncing');
+        normalizeAuditLogsInState(appState);
+        setSyncStatus('Salvando snapshot consolidado no Google Drive...', 'syncing');
         localStorage.setItem(storageKey, JSON.stringify(appState));
 
         if (driveFileId) {
@@ -8156,7 +9302,7 @@
 
         pendingDriveSave = false;
         pendingDriveSaveOptions = {};
-        setSyncStatus('Google Drive sincronizado.', 'connected');
+        setSyncStatus('Google Drive sincronizado com snapshot e histórico.', 'connected');
       } finally {
         isDriveBusy = false;
 
@@ -8299,6 +9445,7 @@
     let activeEditingResourceRecordId = null;
     let activeEditingEvolutionRecordId = null;
     let activeEditingAppointmentId = null;
+    let pendingRecordDelete = null;
     let navigationHistory = [];
     let activeAppointmentSummaryScope = 'month';
     let activeAppointmentMonth = getCurrentMonthValue();
@@ -9292,12 +10439,12 @@
     function collectResourceRecordChanges(originalRecord, updatedRecord) {
       const changes = [];
 
-      addChange(changes, 'Tipo', getResourceTypeLabel(originalRecord.type), getResourceTypeLabel(updatedRecord.type));
-      addChange(changes, 'Serviço', originalRecord.servico || '', updatedRecord.servico || '');
-      addChange(changes, 'Descrição', originalRecord.descricao || '', updatedRecord.descricao || '');
-      addChange(changes, 'Item', originalRecord.item || '', updatedRecord.item || '');
-      addChange(changes, 'Valor numérico', originalRecord.quantidade || '', updatedRecord.quantidade || '');
-      addChange(changes, 'Data', originalRecord.date || '', updatedRecord.date || '', 'date');
+      addChange(changes, 'Tipo', getResourceTypeLabel(originalRecord.type), getResourceTypeLabel(updatedRecord.type), 'text', 'type');
+      addChange(changes, 'Serviço', originalRecord.servico || '', updatedRecord.servico || '', 'text', 'servico');
+      addChange(changes, 'Descrição', originalRecord.descricao || '', updatedRecord.descricao || '', 'text', 'descricao');
+      addChange(changes, 'Item', originalRecord.item || '', updatedRecord.item || '', 'text', 'item');
+      addChange(changes, 'Valor numérico', originalRecord.quantidade || '', updatedRecord.quantidade || '', 'text', 'quantidade');
+      addChange(changes, 'Data', originalRecord.date || '', updatedRecord.date || '', 'date', 'date');
 
       return changes;
     }
@@ -9691,8 +10838,8 @@
     function collectEvolutionRecordChanges(originalRecord, updatedRecord) {
       const changes = [];
 
-      addChange(changes, 'Data da evolução', originalRecord.date || '', updatedRecord.date || '', 'date');
-      addChange(changes, 'Registro', originalRecord.contentText || '', updatedRecord.contentText || '');
+      addChange(changes, 'Data da evolução', originalRecord.date || '', updatedRecord.date || '', 'date', 'date');
+      addChange(changes, 'Registro', originalRecord.contentText || '', updatedRecord.contentText || '', 'text', 'contentText');
 
       return changes;
     }
@@ -9910,16 +11057,232 @@
       return familyHistoryDateFilter?.value || '';
     }
 
+    function normalizeFamilyHistoryMonthFilterValue(value) {
+      const text = String(value || '').trim();
+
+      if (!text) {
+        return '';
+      }
+
+      const monthMatch = text.match(/^(\d{4})-(\d{2})$/);
+      if (monthMatch) {
+        const monthNumber = Number(monthMatch[2]);
+        return monthNumber >= 1 && monthNumber <= 12 ? `${monthMatch[1]}-${monthMatch[2]}` : '';
+      }
+
+      const normalizedDate = normalizeDateValue(text);
+      return normalizedDate ? normalizedDate.slice(0, 7) : '';
+    }
+
+    function getMonthFilterFromDateValue(dateValue) {
+      const normalizedDate = normalizeDateValue(dateValue);
+      return normalizedDate ? normalizedDate.slice(0, 7) : '';
+    }
+
+    function recordMatchesFamilyHistoryMonthFilter(record, monthFilter) {
+      return !monthFilter || getMonthFilterFromDateValue(record?.date) === monthFilter;
+    }
+
+    function updateFamilyHistoryFilterState() {
+      const filterField = familyHistoryDateFilter?.closest('.family-history-filter-field');
+      if (!filterField) {
+        return;
+      }
+
+      const isActive = Boolean(normalizeFamilyHistoryMonthFilterValue(familyHistoryDateFilter.value));
+      filterField.dataset.filterActive = isActive ? 'true' : 'false';
+    }
+
+    function getPlainTextFromRichHtml(html) {
+      const div = document.createElement('div');
+      div.innerHTML = String(html || '');
+      return String(div.textContent || div.innerText || '').trim();
+    }
+
+    function createFamilyUnifiedTimelineItems(familyId, dateFilter = '') {
+      const normalizedFilter = normalizeFamilyHistoryMonthFilterValue(dateFilter || '');
+      const items = [];
+
+      (appState.collections.resourceRecords || [])
+        .filter((record) => record.familyId === familyId)
+        .filter((record) => recordMatchesFamilyHistoryMonthFilter(record, normalizedFilter))
+        .forEach((record) => {
+          const isDonation = record.type === 'doacao';
+          items.push({
+            id: record.id,
+            kind: 'resource',
+            typeLabel: isDonation ? 'Doação' : 'Recurso',
+            title: isDonation
+              ? (record.item || 'Item não informado')
+              : (record.servico || 'Serviço não informado'),
+            detail: isDonation
+              ? `Quantidade/valor: ${record.quantidade || 'Não informado'}`
+              : (record.descricao || 'Sem descrição'),
+            meta: 'Registro de recursos',
+            date: record.date || '',
+            createdAt: record.createdAt || '',
+            editLabel: 'Editar',
+            editAriaLabel: `Editar registro de recurso de ${isDonation ? (record.item || 'item não informado') : (record.servico || 'serviço não informado')}`,
+            editAction: () => openResourceEditModal(record.id)
+          });
+        });
+
+      (appState.collections.evolutionRecords || [])
+        .filter((record) => record.familyId === familyId)
+        .filter((record) => recordMatchesFamilyHistoryMonthFilter(record, normalizedFilter))
+        .forEach((record) => {
+          const contentHtml = getEvolutionRecordHtml(record);
+          const contentText = record.contentText || getPlainTextFromRichHtml(contentHtml);
+          items.push({
+            id: record.id,
+            kind: 'evolution',
+            typeLabel: 'Evolução',
+            title: 'Evolução registrada',
+            detail: contentText || 'Sem texto registrado.',
+            detailHtml: contentHtml || '',
+            meta: 'Acompanhamento familiar',
+            date: record.date || '',
+            createdAt: record.createdAt || '',
+            editLabel: 'Editar',
+            editAriaLabel: `Editar evolução de ${record.date ? formatDisplayDate(record.date) : 'data não informada'}`,
+            editAction: () => openEvolutionEditModal(record.id)
+          });
+        });
+
+      (appState.collections.appointments || [])
+        .filter((record) => record.familyId === familyId)
+        .filter((record) => recordMatchesFamilyHistoryMonthFilter(record, normalizedFilter))
+        .forEach((record) => {
+          items.push({
+            id: record.id,
+            kind: 'appointment',
+            typeLabel: 'Agendamento',
+            title: record.description || 'Agendamento sem descrição',
+            detail: `Status: ${getAppointmentStatusLabel(record.status, record)}`,
+            meta: `Cadastrado por: ${record.createdByUsername || 'Usuário não identificado'}`,
+            date: record.date || '',
+            createdAt: record.createdAt || '',
+            editLabel: 'Editar',
+            editAriaLabel: `Editar agendamento de ${record.familyTitle || 'família sem nome'} em ${record.date ? formatDisplayDate(record.date) : 'data não informada'}`,
+            editAction: () => openAppointmentEditModal(record.id)
+          });
+        });
+
+      return items.sort((first, second) => {
+        return String(second.date || '').localeCompare(String(first.date || ''))
+          || String(second.createdAt || '').localeCompare(String(first.createdAt || ''))
+          || String(first.typeLabel || '').localeCompare(String(second.typeLabel || ''), 'pt-BR', { sensitivity: 'base' });
+      });
+    }
+
+    function renderFamilyUnifiedTimelineInto(container, familyId, options = {}) {
+      if (!container) {
+        return;
+      }
+
+      const dateFilter = normalizeFamilyHistoryMonthFilterValue(options.dateFilter || '');
+      container.innerHTML = '';
+      const records = createFamilyUnifiedTimelineItems(familyId, dateFilter);
+
+      if (records.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'empty-note family-unified-timeline-empty';
+        empty.textContent = dateFilter
+          ? 'Nenhum recurso, evolução ou agendamento registrado neste mês.'
+          : 'Nenhum recurso, evolução ou agendamento registrado na linha do tempo.';
+        container.append(empty);
+        return;
+      }
+
+      const groups = new Map();
+      records.forEach((record) => {
+        const key = record.date || 'sem-data';
+        if (!groups.has(key)) {
+          groups.set(key, []);
+        }
+        groups.get(key).push(record);
+      });
+
+      groups.forEach((dateRecords, dateKey) => {
+        const day = document.createElement('article');
+        day.className = 'family-unified-timeline-day';
+
+        const dateBlock = document.createElement('div');
+        dateBlock.className = 'family-unified-timeline-date';
+        dateBlock.textContent = dateKey === 'sem-data' ? 'Sem data' : formatDisplayDate(dateKey);
+
+        const count = document.createElement('span');
+        count.className = 'family-unified-timeline-count';
+        count.textContent = dateRecords.length === 1 ? '1 registro' : `${dateRecords.length} registros`;
+        dateBlock.append(count);
+
+        const entries = document.createElement('div');
+        entries.className = 'family-unified-timeline-records';
+
+        dateRecords.forEach((record) => {
+          const entry = document.createElement('article');
+          entry.className = 'family-unified-timeline-entry';
+          entry.dataset.timelineType = record.kind;
+
+          const type = document.createElement('span');
+          type.className = 'family-unified-timeline-type';
+          type.textContent = record.typeLabel;
+
+          const main = document.createElement('div');
+          main.className = 'family-unified-timeline-main';
+
+          const title = document.createElement('div');
+          title.className = 'family-unified-timeline-title';
+          title.textContent = record.title;
+
+          const meta = document.createElement('div');
+          meta.className = 'family-unified-timeline-meta';
+          meta.textContent = record.meta;
+          main.append(title, meta);
+
+          const detail = document.createElement('div');
+          detail.className = 'family-unified-timeline-detail';
+          if (record.kind === 'evolution' && record.detailHtml) {
+            detail.innerHTML = record.detailHtml;
+          } else {
+            detail.textContent = record.detail;
+          }
+
+          const actions = document.createElement('div');
+          actions.className = 'family-unified-timeline-actions';
+
+          const editButton = document.createElement('button');
+          editButton.className = 'table-action-button family-unified-timeline-edit-button';
+          editButton.type = 'button';
+          editButton.textContent = record.editLabel;
+          editButton.setAttribute('aria-label', record.editAriaLabel);
+          editButton.addEventListener('click', record.editAction);
+          actions.append(editButton);
+
+          if (record.kind === 'evolution') {
+            main.append(actions);
+            entry.append(type, main, detail);
+          } else {
+            entry.append(type, main, detail, actions);
+          }
+          entries.append(entry);
+        });
+
+        day.append(dateBlock, entries);
+        container.append(day);
+      });
+    }
+
     function renderResourceTimelineInto(container, familyId, options = {}) {
       if (!container) {
         return;
       }
 
-      const dateFilter = normalizeDateValue(options.dateFilter || '');
+      const dateFilter = normalizeFamilyHistoryMonthFilterValue(options.dateFilter || '');
       container.innerHTML = '';
       const records = (appState.collections.resourceRecords || [])
         .filter((record) => record.familyId === familyId)
-        .filter((record) => !dateFilter || record.date === dateFilter)
+        .filter((record) => recordMatchesFamilyHistoryMonthFilter(record, dateFilter))
         .sort((first, second) => {
           return String(second.date || '').localeCompare(String(first.date || '')) || String(second.createdAt || '').localeCompare(String(first.createdAt || ''));
         });
@@ -9928,7 +11291,7 @@
         const empty = document.createElement('div');
         empty.className = 'empty-note resource-timeline-empty';
         empty.textContent = dateFilter
-          ? 'Nenhum recurso registrado nesta data.'
+          ? 'Nenhum recurso registrado neste mês.'
           : 'Nenhum recurso registrado.';
         container.append(empty);
         return;
@@ -10004,11 +11367,11 @@
         return;
       }
 
-      const dateFilter = normalizeDateValue(options.dateFilter || '');
+      const dateFilter = normalizeFamilyHistoryMonthFilterValue(options.dateFilter || '');
       container.innerHTML = '';
       const records = (appState.collections.evolutionRecords || [])
         .filter((record) => record.familyId === familyId)
-        .filter((record) => !dateFilter || record.date === dateFilter)
+        .filter((record) => recordMatchesFamilyHistoryMonthFilter(record, dateFilter))
         .sort((first, second) => {
           return String(second.date || '').localeCompare(String(first.date || '')) || String(second.createdAt || '').localeCompare(String(first.createdAt || ''));
         });
@@ -10017,7 +11380,7 @@
         const empty = document.createElement('div');
         empty.className = 'empty-note evolution-timeline-empty';
         empty.textContent = dateFilter
-          ? 'Nenhuma evolução registrada nesta data.'
+          ? 'Nenhuma evolução registrada neste mês.'
           : 'Nenhuma evolução registrada.';
         container.append(empty);
         return;
@@ -10219,7 +11582,7 @@
 
     function setFamilyHistoryTab(tabKey) {
       const canShowLinkedTabs = familyFormMode === 'view' && Boolean(activeViewedFamilyId);
-      const requestedTab = ['form', 'resources', 'evolution', 'appointments'].includes(tabKey) ? tabKey : 'form';
+      const requestedTab = ['form', 'timeline', 'resources', 'evolution', 'appointments'].includes(tabKey) ? tabKey : 'form';
       activeFamilyHistoryTab = canShowLinkedTabs || requestedTab === 'form' ? requestedTab : 'form';
 
       familyHistoryTabButtons.forEach((button) => {
@@ -10242,6 +11605,10 @@
       }
 
       const linkedTabHeaders = {
+        timeline: {
+          title: 'LINHA DO TEMPO',
+          description: 'Acompanhe, em ordem cronológica, recursos, evoluções e agendamentos vinculados à família.'
+        },
         resources: {
           title: 'REGISTRO DE RECURSOS',
           description: 'Registre e acompanhe serviços acessados, doações e demais recursos vinculados à família.'
@@ -10275,11 +11642,15 @@
       }
 
       if (registerResourceButton) {
-        registerResourceButton.hidden = !canShowLinkedTabs || activeFamilyHistoryTab !== 'resources';
+        registerResourceButton.hidden = !canShowLinkedTabs || !['timeline', 'resources'].includes(activeFamilyHistoryTab);
       }
 
       if (evolutionButton) {
-        evolutionButton.hidden = !canShowLinkedTabs || activeFamilyHistoryTab !== 'evolution';
+        evolutionButton.hidden = !canShowLinkedTabs || !['timeline', 'evolution'].includes(activeFamilyHistoryTab);
+      }
+
+      if (timelineAddAppointmentButton) {
+        timelineAddAppointmentButton.hidden = !canShowLinkedTabs || activeFamilyHistoryTab !== 'timeline';
       }
     }
 
@@ -10292,7 +11663,9 @@
         return;
       }
 
+      updateFamilyHistoryFilterState();
       const dateFilter = getFamilyHistoryDateFilterValue();
+      renderFamilyUnifiedTimelineInto(familyInlineUnifiedTimeline, activeViewedFamilyId, { dateFilter });
       renderResourceTimelineInto(familyInlineResourceTimeline, activeViewedFamilyId, { dateFilter });
       renderEvolutionTimelineInto(familyInlineEvolutionTimeline, activeViewedFamilyId, { dateFilter });
       renderFamilyAppointmentsInto(familyInlineAppointmentList, activeViewedFamilyId, { year: activeFamilyAppointmentYear });
@@ -10862,8 +12235,49 @@
 
     function normalizeAuditFields(fields = []) {
       return (fields || [])
-        .map((field) => ({ label: String(field?.label || '').trim(), value: formatChangeValue(field?.value) }))
+        .map((field) => ({
+          label: String(field?.label || '').trim(),
+          value: formatChangeValue(field?.value),
+          valueRaw: cloneStateValue(field?.value)
+        }))
         .filter((field) => field.label);
+    }
+
+    function normalizeAuditChange(change = {}) {
+      const valueType = change.valueType || change.type || 'text';
+      const beforeRaw = Object.prototype.hasOwnProperty.call(change, 'beforeRaw')
+        ? cloneStateValue(change.beforeRaw)
+        : cloneStateValue(change.before ?? change.antes ?? change.de ?? change.from ?? change.oldValue ?? '');
+      const afterRaw = Object.prototype.hasOwnProperty.call(change, 'afterRaw')
+        ? cloneStateValue(change.afterRaw)
+        : cloneStateValue(change.after ?? change.depois ?? change.para ?? change.to ?? change.newValue ?? '');
+
+      return {
+        label: String(change.label || change.campo || change.field || 'Campo não identificado').trim(),
+        fieldPath: String(change.fieldPath || change.path || '').trim(),
+        before: change.before || change.antes || change.de || change.from || change.oldValue || formatChangeValue(beforeRaw, valueType),
+        after: change.after || change.depois || change.para || change.to || change.newValue || formatChangeValue(afterRaw, valueType),
+        beforeRaw,
+        afterRaw,
+        valueType,
+        persisted: change.persisted !== false,
+        conflict: change.conflict === true,
+        overriddenBy: change.overriddenBy || null
+      };
+    }
+
+    function getAuditEntityFullRecord(entityType, entityId) {
+      const collectionName = getCollectionNameForEntityType(entityType);
+
+      if (!collectionName || !entityId) {
+        return null;
+      }
+
+      if (collectionName === 'users') {
+        return (appState.security?.users || []).find((user) => user.id === entityId) || null;
+      }
+
+      return (appState.collections?.[collectionName] || []).find((record) => record.id === entityId) || null;
     }
 
     function addAuditLog(entry = {}) {
@@ -10873,9 +12287,13 @@
       if (!Array.isArray(appState.collections.auditLogs)) {
         appState.collections.auditLogs = [];
       }
+
       const auditUser = getCurrentAuditUser();
-      appState.collections.auditLogs.push({
-        id: createId('audit'),
+      const localCreatedAt = new Date().toISOString();
+      const operationId = entry.operationId || createId('op');
+      const normalizedEntry = {
+        id: entry.id || createId('audit'),
+        operationId,
         action: entry.action || 'Alteração registrada',
         changeType: entry.changeType || 'system',
         entityType: entry.entityType || 'Sistema',
@@ -10883,12 +12301,24 @@
         familyId: entry.familyId || '',
         familyTitle: entry.familyTitle || '',
         title: entry.title || entry.action || 'Alteração registrada',
-        createdAt: new Date().toISOString(),
-        userId: auditUser.id,
-        username: auditUser.username,
-        changes: Array.isArray(entry.changes) ? entry.changes : [],
-        newRecord: normalizeAuditFields(entry.newRecord || [])
-      });
+        createdAt: entry.createdAt || localCreatedAt,
+        localCreatedAt: entry.localCreatedAt || entry.createdAt || localCreatedAt,
+        driveCreatedAt: entry.driveCreatedAt || '',
+        driveModifiedAt: entry.driveModifiedAt || '',
+        timeSource: entry.timeSource || 'device_pending_google_drive',
+        syncStatus: entry.syncStatus || 'pending',
+        operationDriveFileId: entry.operationDriveFileId || '',
+        operationDriveFileName: entry.operationDriveFileName || '',
+        userId: entry.userId || auditUser.id,
+        username: entry.username || auditUser.username,
+        deviceId: entry.deviceId || getDeviceId(),
+        changes: Array.isArray(entry.changes) ? entry.changes.map(normalizeAuditChange).filter((change) => change.label) : [],
+        newRecord: normalizeAuditFields(entry.newRecord || []),
+        fullRecordRaw: entry.fullRecordRaw || cloneStateValue(getAuditEntityFullRecord(entry.entityType, entry.entityId))
+      };
+
+      appState.collections.auditLogs.push(normalizedEntry);
+      return normalizedEntry;
     }
 
     function createFamilyAuditFields(family) {
@@ -10933,7 +12363,8 @@
     function renderAuditHistory() {
       if (!auditHistoryList) return;
       auditHistoryList.innerHTML = '';
-      const logs = [...(appState.collections.auditLogs || [])].sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+      normalizeAuditLogsInState(appState);
+      const logs = [...(appState.collections.auditLogs || [])].sort((a, b) => compareOperations(b, a));
       if (logs.length === 0) {
         const empty = document.createElement('div');
         empty.className = 'empty-note';
@@ -10952,7 +12383,9 @@
         title.textContent = log.title || log.action || 'Alteração registrada';
         const meta = document.createElement('div');
         meta.className = 'audit-entry-meta';
-        meta.textContent = [formatAuditDateTime(log.createdAt), `Usuário: ${log.username || 'Usuário não identificado'}`, log.familyTitle ? `Família: ${log.familyTitle}` : '', log.entityType ? `Registro: ${log.entityType}` : ''].filter(Boolean).join(' · ');
+        const syncStatusLabel = getAuditSyncStatusLabel(log);
+        const driveTime = log.driveCreatedAt ? `Horário Drive: ${formatAuditDateTime(log.driveCreatedAt)}` : '';
+        meta.textContent = [formatAuditDateTime(getOperationSortTime(log)), driveTime, `Usuário: ${log.username || 'Usuário não identificado'}`, syncStatusLabel, log.familyTitle ? `Família: ${log.familyTitle}` : '', log.entityType ? `Registro: ${log.entityType}` : ''].filter(Boolean).join(' · ');
         heading.append(title, meta);
         const type = document.createElement('span');
         type.className = 'audit-entry-type';
@@ -10962,14 +12395,14 @@
         if (log.changeType === 'edit') {
           const table = document.createElement('table');
           table.className = 'audit-change-table';
-          table.innerHTML = '<thead><tr><th>Campo</th><th>Antes</th><th>Depois</th></tr></thead>';
+          table.innerHTML = '<thead><tr><th>Campo</th><th>Antes</th><th>Depois</th><th>Status</th></tr></thead>';
           const body = document.createElement('tbody');
           const changes = Array.isArray(log.changes) ? log.changes : [];
 
           if (!changes.length) {
             const row = document.createElement('tr');
             const cell = document.createElement('td');
-            cell.colSpan = 3;
+            cell.colSpan = 4;
             cell.textContent = 'Nenhum detalhe de edição registrado para esta alteração.';
             row.append(cell);
             body.append(row);
@@ -10979,7 +12412,8 @@
               const values = [
                 change.label || change.campo || change.field || 'Campo não identificado',
                 change.before || change.antes || change.de || change.from || change.oldValue || '—',
-                change.after || change.depois || change.para || change.to || change.newValue || '—'
+                change.after || change.depois || change.para || change.to || change.newValue || '—',
+                getAuditChangeStatusLabel(change)
               ];
               values.forEach((value) => {
                 const cell = document.createElement('td');
@@ -11140,8 +12574,8 @@
         entityId: user.id,
         title: `${nextActive ? 'Usuário reativado' : 'Usuário desativado'}: ${user.username}`,
         changes: [
-          { label: 'Usuário', before: user.username, after: user.username },
-          { label: 'Status', before: wasActive ? 'Ativo' : 'Desativado', after: nextActive ? 'Ativo' : 'Desativado' }
+          { label: 'Usuário', fieldPath: 'username', before: user.username, after: user.username, beforeRaw: user.username, afterRaw: user.username, valueType: 'text' },
+          { label: 'Status', fieldPath: 'isActive', before: wasActive ? 'Ativo' : 'Desativado', after: nextActive ? 'Ativo' : 'Desativado', beforeRaw: wasActive, afterRaw: nextActive, valueType: 'boolean' }
         ]
       });
 
@@ -11149,7 +12583,7 @@
       setUserManagementStatus(nextActive ? 'Usuário reativado com sucesso.' : 'Usuário desativado com sucesso. Registros e histórico permaneceram intactos.', 'connected');
     }
 
-    function addChange(changes, label, beforeValue, afterValue, type = 'text') {
+    function addChange(changes, label, beforeValue, afterValue, type = 'text', fieldPath = '') {
       const beforeText = stringifyCompareValue(beforeValue);
       const afterText = stringifyCompareValue(afterValue);
 
@@ -11159,8 +12593,15 @@
 
       changes.push({
         label,
+        fieldPath: fieldPath || '',
         before: formatChangeValue(beforeValue, type),
-        after: formatChangeValue(afterValue, type)
+        after: formatChangeValue(afterValue, type),
+        beforeRaw: cloneStateValue(beforeValue),
+        afterRaw: cloneStateValue(afterValue),
+        valueType: type,
+        persisted: true,
+        conflict: false,
+        overriddenBy: null
       });
     }
 
@@ -11172,25 +12613,25 @@
       const updatedIncome = new Map((updatedFamily.renda?.fontes || []).map((row) => [row.fonte, row.valor]));
 
       [
-        ['Dados do cadastro · Data de cadastro', originalFamily.cadastro?.dataCadastro, updatedFamily.cadastro?.dataCadastro, 'date'],
-        ['Dados do cadastro · Responsável pelo cadastro', originalFamily.cadastro?.responsavelCadastro, updatedFamily.cadastro?.responsavelCadastro],
-        ['Identificação · Nome', originalFamily.identificacao?.nome, updatedFamily.identificacao?.nome],
-        ['Identificação · Apelido', originalFamily.identificacao?.apelido, updatedFamily.identificacao?.apelido],
-        ['Identificação · Data de nascimento', originalFamily.identificacao?.dataNascimento, updatedFamily.identificacao?.dataNascimento, 'date'],
-        ['Identificação · CPF', originalFamily.identificacao?.cpf, updatedFamily.identificacao?.cpf],
-        ['Identificação · Sexo', originalFamily.identificacao?.sexo, updatedFamily.identificacao?.sexo],
-        ['Identificação · Raça/Cor', originalFamily.identificacao?.racaCor, updatedFamily.identificacao?.racaCor],
-        ['Identificação · Escolaridade', originalFamily.identificacao?.escolaridade, updatedFamily.identificacao?.escolaridade],
-        ['Identificação · PCD', originalFamily.identificacao?.pcd, updatedFamily.identificacao?.pcd],
-        ['Identificação · Qual deficiência?', originalFamily.identificacao?.deficiencia, updatedFamily.identificacao?.deficiencia],
-        ['Identificação · Telefones', originalFamily.identificacao?.telefones, updatedFamily.identificacao?.telefones],
-        ['Identificação · Religião', originalFamily.identificacao?.religiao, updatedFamily.identificacao?.religiao],
-        ['Identificação · Como acessou?', originalFamily.identificacao?.comoAcessou, updatedFamily.identificacao?.comoAcessou],
-        ['Endereço · Rua', originalFamily.endereco?.rua, updatedFamily.endereco?.rua],
-        ['Endereço · Complemento', originalFamily.endereco?.complemento, updatedFamily.endereco?.complemento],
-        ['Endereço · Número', originalFamily.endereco?.numero, updatedFamily.endereco?.numero],
-        ['Endereço · Ponto de referência', originalFamily.endereco?.pontoReferencia, updatedFamily.endereco?.pontoReferencia]
-      ].forEach(([label, beforeValue, afterValue, type]) => addChange(changes, label, beforeValue, afterValue, type));
+        ['Dados do cadastro · Data de cadastro', originalFamily.cadastro?.dataCadastro, updatedFamily.cadastro?.dataCadastro, 'date', 'cadastro.dataCadastro'],
+        ['Dados do cadastro · Responsável pelo cadastro', originalFamily.cadastro?.responsavelCadastro, updatedFamily.cadastro?.responsavelCadastro, 'text', 'cadastro.responsavelCadastro'],
+        ['Identificação · Nome', originalFamily.identificacao?.nome, updatedFamily.identificacao?.nome, 'text', 'identificacao.nome'],
+        ['Identificação · Apelido', originalFamily.identificacao?.apelido, updatedFamily.identificacao?.apelido, 'text', 'identificacao.apelido'],
+        ['Identificação · Data de nascimento', originalFamily.identificacao?.dataNascimento, updatedFamily.identificacao?.dataNascimento, 'date', 'identificacao.dataNascimento'],
+        ['Identificação · CPF', originalFamily.identificacao?.cpf, updatedFamily.identificacao?.cpf, 'text', 'identificacao.cpf'],
+        ['Identificação · Sexo', originalFamily.identificacao?.sexo, updatedFamily.identificacao?.sexo, 'text', 'identificacao.sexo'],
+        ['Identificação · Raça/Cor', originalFamily.identificacao?.racaCor, updatedFamily.identificacao?.racaCor, 'text', 'identificacao.racaCor'],
+        ['Identificação · Escolaridade', originalFamily.identificacao?.escolaridade, updatedFamily.identificacao?.escolaridade, 'text', 'identificacao.escolaridade'],
+        ['Identificação · PCD', originalFamily.identificacao?.pcd, updatedFamily.identificacao?.pcd, 'text', 'identificacao.pcd'],
+        ['Identificação · Qual deficiência?', originalFamily.identificacao?.deficiencia, updatedFamily.identificacao?.deficiencia, 'text', 'identificacao.deficiencia'],
+        ['Identificação · Telefones', originalFamily.identificacao?.telefones, updatedFamily.identificacao?.telefones, 'text', 'identificacao.telefones'],
+        ['Identificação · Religião', originalFamily.identificacao?.religiao, updatedFamily.identificacao?.religiao, 'text', 'identificacao.religiao'],
+        ['Identificação · Como acessou?', originalFamily.identificacao?.comoAcessou, updatedFamily.identificacao?.comoAcessou, 'text', 'identificacao.comoAcessou'],
+        ['Endereço · Rua', originalFamily.endereco?.rua, updatedFamily.endereco?.rua, 'text', 'endereco.rua'],
+        ['Endereço · Complemento', originalFamily.endereco?.complemento, updatedFamily.endereco?.complemento, 'text', 'endereco.complemento'],
+        ['Endereço · Número', originalFamily.endereco?.numero, updatedFamily.endereco?.numero, 'text', 'endereco.numero'],
+        ['Endereço · Ponto de referência', originalFamily.endereco?.pontoReferencia, updatedFamily.endereco?.pontoReferencia, 'text', 'endereco.pontoReferencia']
+      ].forEach(([label, beforeValue, afterValue, type, fieldPath]) => addChange(changes, label, beforeValue, afterValue, type, fieldPath));
 
       const maxMembers = Math.max(originalMembers.length, updatedMembers.length);
       const memberFields = [
@@ -11215,17 +12656,20 @@
         const memberName = updatedMember.nome || originalMember.nome || `Integrante ${index + 1}`;
 
         memberFields.forEach(([key, label, type]) => {
-          addChange(changes, `Composição familiar · ${memberName} · ${label}`, originalMember[key], updatedMember[key], type);
+          addChange(changes, `Composição familiar · ${memberName} · ${label}`, originalMember[key], updatedMember[key], type || 'text', `composicaoFamiliar.${index}.${key}`);
         });
       }
 
       Array.from(new Set([...originalIncome.keys(), ...updatedIncome.keys()])).forEach((source) => {
-        addChange(changes, `Renda · ${source}`, originalIncome.get(source), updatedIncome.get(source), 'money');
+        const updatedIncomeIndex = (updatedFamily.renda?.fontes || []).findIndex((row) => row.fonte === source);
+        const originalIncomeIndex = (originalFamily.renda?.fontes || []).findIndex((row) => row.fonte === source);
+        const incomeIndex = updatedIncomeIndex >= 0 ? updatedIncomeIndex : originalIncomeIndex;
+        addChange(changes, `Renda · ${source}`, originalIncome.get(source), updatedIncome.get(source), 'money', `renda.fontes.${Math.max(incomeIndex, 0)}.valor`);
       });
 
-      addChange(changes, 'Renda · Total de integrantes', originalFamily.renda?.totalMembros, updatedFamily.renda?.totalMembros);
-      addChange(changes, 'Renda · Total', originalFamily.renda?.totalRenda, updatedFamily.renda?.totalRenda, 'money');
-      addChange(changes, 'Renda · Per capita', originalFamily.renda?.rendaPerCapita, updatedFamily.renda?.rendaPerCapita, 'money');
+      addChange(changes, 'Renda · Total de integrantes', originalFamily.renda?.totalMembros, updatedFamily.renda?.totalMembros, 'text', 'renda.totalMembros');
+      addChange(changes, 'Renda · Total', originalFamily.renda?.totalRenda, updatedFamily.renda?.totalRenda, 'money', 'renda.totalRenda');
+      addChange(changes, 'Renda · Per capita', originalFamily.renda?.rendaPerCapita, updatedFamily.renda?.rendaPerCapita, 'money', 'renda.rendaPerCapita');
 
       return changes;
     }
@@ -11536,6 +12980,10 @@
         evolutionButton.hidden = !isViewMode || !activeViewedFamilyId;
       }
 
+      if (timelineAddAppointmentButton) {
+        timelineAddAppointmentButton.hidden = !isViewMode || !activeViewedFamilyId;
+      }
+
       renderFamilyLinkedHistory();
       updateFamilyHeaderTitle();
     }
@@ -11599,6 +13047,10 @@
 
       if (evolutionButton) {
         evolutionButton.hidden = true;
+      }
+
+      if (timelineAddAppointmentButton) {
+        timelineAddAppointmentButton.hidden = true;
       }
 
       setFamilyHistoryTab('form');
@@ -11842,12 +13294,16 @@
       allFamiliesList.innerHTML = '';
       const query = normalizeSearchText(allFamiliesSearchInput?.value || '');
       const allFamilies = getFamiliesSortedByRepresentative();
-      const families = query
-        ? allFamilies.filter((family) => {
-            const representativeName = family.identificacao?.nome || family.title || '';
-            return normalizeSearchText(representativeName).includes(query);
-          })
-        : allFamilies;
+      const results = query
+        ? allFamilies
+            .map((family) => {
+              const representativeName = family.identificacao?.nome || family.title || '';
+              const representativeMatches = normalizeSearchText(representativeName).includes(query);
+              const matchingMembers = getMatchingFamilyMembers(family, query);
+              return { family, representativeMatches, matchingMembers };
+            })
+            .filter((result) => result.representativeMatches || result.matchingMembers.length > 0)
+        : allFamilies.map((family) => ({ family, representativeMatches: false, matchingMembers: [] }));
 
       if (allFamilies.length === 0) {
         const empty = document.createElement('div');
@@ -11857,16 +13313,16 @@
         return;
       }
 
-      if (families.length === 0) {
+      if (results.length === 0) {
         const empty = document.createElement('div');
         empty.className = 'empty-note';
-        empty.textContent = 'Nenhuma família encontrada para o nome digitado.';
+        empty.textContent = 'Nenhuma família encontrada para o representante ou componente familiar digitado.';
         allFamiliesList.append(empty);
         return;
       }
 
-      families.forEach((family) => {
-        allFamiliesList.append(createFamilyRepresentativeButton(family));
+      results.forEach(({ family, matchingMembers }) => {
+        allFamiliesList.append(createFamilyRepresentativeButton(family, { matchingMembers }));
       });
     }
 
@@ -12162,6 +13618,14 @@
     addAppointmentButton?.addEventListener('click', () => openAppointmentCreateModal());
     appointmentRecordEditForm?.addEventListener('submit', saveAppointmentEditModal);
     appointmentRecordEditCancelButton?.addEventListener('click', closeAppointmentEditModal);
+    appointmentRecordDeleteButton?.addEventListener('click', () => openRecordDeleteConfirm('appointment'));
+    recordDeleteConfirmCancelButton?.addEventListener('click', closeRecordDeleteConfirmModal);
+    recordDeleteConfirmActionButton?.addEventListener('click', confirmRecordDelete);
+    recordDeleteConfirmModal?.addEventListener('click', (event) => {
+      if (event.target === recordDeleteConfirmModal) {
+        closeRecordDeleteConfirmModal();
+      }
+    });
     appointmentRecordEditModal?.addEventListener('click', (event) => {
       if (event.target === appointmentRecordEditModal) {
         closeAppointmentEditModal();
@@ -12179,6 +13643,7 @@
     });
     appointmentFamilyFilter?.addEventListener('change', renderAppointments);
     familyAddAppointmentButton?.addEventListener('click', openFamilyAppointmentCreateModal);
+    timelineAddAppointmentButton?.addEventListener('click', openFamilyAppointmentCreateModal);
     familyAppointmentPrevMonthButton?.addEventListener('click', () => changeFamilyAppointmentMonth(-1));
     familyAppointmentNextMonthButton?.addEventListener('click', () => changeFamilyAppointmentMonth(1));
 
@@ -12246,6 +13711,7 @@
       resourceTypeSelect?.addEventListener('change', updateResourceTypeFields);
       resourceRecordEditForm?.addEventListener('submit', saveResourceEditModal);
       resourceRecordEditCancelButton?.addEventListener('click', closeResourceEditModal);
+      resourceRecordDeleteButton?.addEventListener('click', () => openRecordDeleteConfirm('resource'));
       editResourceTypeSelect?.addEventListener('change', updateEditResourceTypeFields);
       editResourceAddServiceOptionButton?.addEventListener('click', addEditResourceLine);
       editResourceAddItemOptionButton?.addEventListener('click', addEditResourceLine);
@@ -12263,6 +13729,7 @@
       cancelEvolutionEditButton?.addEventListener('click', resetEvolutionForm);
       evolutionRecordEditForm?.addEventListener('submit', saveEvolutionEditModal);
       evolutionRecordEditCancelButton?.addEventListener('click', closeEvolutionEditModal);
+      evolutionRecordDeleteButton?.addEventListener('click', () => openRecordDeleteConfirm('evolution'));
       evolutionRecordEditModal?.addEventListener('click', (event) => {
         if (event.target === evolutionRecordEditModal) {
           closeEvolutionEditModal();
