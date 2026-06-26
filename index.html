@@ -148,6 +148,27 @@
       background: var(--danger-soft);
     }
 
+    .offline-sync-banner {
+      display: block;
+      width: min(var(--content-width), 100%);
+      margin: 0 auto;
+      padding: 10px 18px 12px;
+      border-top: 1px solid rgba(154, 91, 0, 0.28);
+      color: var(--danger);
+      font-size: 0.88rem;
+      font-weight: 900;
+      line-height: 1.35;
+    }
+
+    .offline-sync-banner[hidden] {
+      display: none;
+    }
+
+    .offline-sync-banner strong {
+      color: var(--text);
+      font-weight: 950;
+    }
+
     .current-user-pill {
       min-height: 34px;
       max-width: 220px;
@@ -3735,6 +3756,9 @@
           <button class="plain-button header-logout-button" id="logout-button" type="button" hidden>Sair</button>
         </div>
       </div>
+      <div class="offline-sync-banner" id="offline-sync-banner" role="status" aria-live="polite" hidden>
+        <strong>Modo local:</strong> sem internet ou sem conexão com o Google Drive. As alterações salvas ficarão neste dispositivo e serão mescladas com o Drive quando a conexão voltar, mantendo a alteração mais recente por data/hora.
+      </div>
     </header>
 
     <main>
@@ -4772,6 +4796,7 @@
     const drivePreferenceKey = `${storageKey}-drive-connected`;
     const deviceIdKey = `${storageKey}-device-id`;
     const authSessionKey = `${storageKey}-auth-session`;
+    const purgeAuditKey = `${storageKey}-purge-audit`;
 
     const googleDriveConfig = {
       clientId: '956584687010-j1ito94g76aniq738tkikvrj1tui6f9f.apps.googleusercontent.com',
@@ -4785,6 +4810,7 @@
     const screens = document.querySelectorAll('.screen');
     const screenLabel = document.querySelector('#current-screen-label');
     const headerSyncStatus = document.querySelector('#header-sync-status');
+    const offlineSyncBanner = document.querySelector('#offline-sync-banner');
     const currentUserPill = document.querySelector('#current-user-pill');
     const logoutButton = document.querySelector('#logout-button');
     const loginForm = document.querySelector('#login-form');
@@ -5059,6 +5085,7 @@
     let pendingDriveSaveOptions = {};
     let pendingDriveAuthOptions = {};
     let driveAccessWaiters = [];
+    let localOfflineAccessActive = false;
 
     let appState = createDefaultState();
 
@@ -5446,6 +5473,40 @@
       return '';
     }
 
+    function isSettingsOperation(operation = {}) {
+      const entityType = String(operation.entityType || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLocaleLowerCase('pt-BR')
+        .trim();
+      const entityId = String(operation.entityId || '');
+
+      return entityType.includes('configuracao')
+        || entityType.includes('opcao')
+        || entityType.includes('option')
+        || entityId.startsWith('optionSets.')
+        || entityId.startsWith('metadata.optionSets.');
+    }
+
+    function applySettingsOperationChanges(state, operation = {}) {
+      if (!state.metadata || typeof state.metadata !== 'object') {
+        state.metadata = createDefaultState().metadata;
+      }
+      if (!state.metadata.optionSets || typeof state.metadata.optionSets !== 'object') {
+        state.metadata.optionSets = cloneDefaultOptionSets();
+      }
+
+      (operation.changes || []).forEach((change) => {
+        if (!change.fieldPath) {
+          return;
+        }
+
+        setValueByPath(state, change.fieldPath, change.afterRaw);
+      });
+
+      state.metadata.optionSets = mergeOptionSets(state.metadata.optionSets);
+    }
+
     function normalizeOperationId(log = {}) {
       return log.operationId || log.id || createId('op');
     }
@@ -5509,7 +5570,10 @@
         deviceId: log.deviceId || getDeviceId(),
         changes: normalizedChanges,
         newRecord: normalizeAuditFields(log.newRecord || []),
-        fullRecordRaw: Object.prototype.hasOwnProperty.call(log, 'fullRecordRaw') ? cloneStateValue(log.fullRecordRaw) : null
+        fullRecordRaw: Object.prototype.hasOwnProperty.call(log, 'fullRecordRaw') ? cloneStateValue(log.fullRecordRaw) : null,
+        deletedRaw: Object.prototype.hasOwnProperty.call(log, 'deletedRaw') ? cloneStateValue(log.deletedRaw) : null,
+        tombstone: log.tombstone === true,
+        purgeSummary: log.purgeSummary && typeof log.purgeSummary === 'object' ? cloneStateValue(log.purgeSummary) : null
       };
     }
 
@@ -5549,7 +5613,10 @@
             ...normalizedLog,
             changes: normalizedLog.changes.length ? normalizedLog.changes : current.changes,
             newRecord: normalizedLog.newRecord.length ? normalizedLog.newRecord : current.newRecord,
-            fullRecordRaw: normalizedLog.fullRecordRaw || current.fullRecordRaw
+            fullRecordRaw: normalizedLog.fullRecordRaw || current.fullRecordRaw,
+            deletedRaw: normalizedLog.deletedRaw || current.deletedRaw,
+            tombstone: normalizedLog.tombstone === true || current.tombstone === true,
+            purgeSummary: normalizedLog.purgeSummary || current.purgeSummary || null
           });
         }
       });
@@ -5703,6 +5770,60 @@
       return clonedRecord;
     }
 
+    function removeEntityByOperation(state, operation = {}) {
+      const collectionName = getCollectionNameForEntityType(operation.entityType);
+      const entityId = operation.entityId || '';
+
+      if (!collectionName || !entityId) {
+        return;
+      }
+
+      if (collectionName === 'users') {
+        if (!state.security || typeof state.security !== 'object') {
+          state.security = { users: [] };
+        }
+        state.security.users = (state.security.users || []).filter((user) => user.id !== entityId);
+        return;
+      }
+
+      if (!state.collections || typeof state.collections !== 'object') {
+        state.collections = createDefaultState().collections;
+      }
+
+      if (!Array.isArray(state.collections[collectionName])) {
+        state.collections[collectionName] = [];
+      }
+
+      state.collections[collectionName] = state.collections[collectionName].filter((record) => record.id !== entityId);
+
+      if (!Array.isArray(state.collections.timelineEvents)) {
+        state.collections.timelineEvents = [];
+      }
+
+      if (collectionName === 'families') {
+        state.collections.forms = (state.collections.forms || []).filter((form) => form.familyId !== entityId);
+        state.collections.timelineEvents = state.collections.timelineEvents.filter((event) => event.familyId !== entityId);
+        state.collections.resourceRecords = (state.collections.resourceRecords || []).filter((record) => record.familyId !== entityId);
+        state.collections.evolutionRecords = (state.collections.evolutionRecords || []).filter((record) => record.familyId !== entityId);
+        state.collections.appointments = (state.collections.appointments || []).filter((record) => record.familyId !== entityId);
+        return;
+      }
+
+      if (collectionName === 'resourceRecords') {
+        state.collections.timelineEvents = state.collections.timelineEvents.filter((event) => event.resourceRecordId !== entityId);
+        return;
+      }
+
+      if (collectionName === 'evolutionRecords') {
+        state.collections.timelineEvents = state.collections.timelineEvents.filter((event) => event.evolutionRecordId !== entityId);
+        return;
+      }
+
+      if (collectionName === 'appointments') {
+        state.collections.timelineEvents = state.collections.timelineEvents.filter((event) => event.appointmentId !== entityId && event.appointmentRecordId !== entityId);
+      }
+    }
+
     function refreshDerivedStateRecords(state) {
       const families = state.collections?.families || [];
       const forms = state.collections?.forms || [];
@@ -5745,19 +5866,35 @@
       const sortedLogs = [...mergedLogs].sort(compareOperations);
 
       sortedLogs.forEach((operation) => {
-        const entity = ensureEntityFromOperation(state, operation);
-
-        if (!entity || operation.changeType !== 'edit') {
+        if (operation.changeType === 'system_purge') {
           return;
         }
 
-        (operation.changes || []).forEach((change) => {
-          if (!change.fieldPath) {
-            return;
-          }
+        if (isSettingsOperation(operation)) {
+          applySettingsOperationChanges(state, operation);
+          return;
+        }
 
-          setValueByPath(entity, change.fieldPath, change.afterRaw);
-        });
+        if (operation.changeType === 'delete') {
+          removeEntityByOperation(state, operation);
+          return;
+        }
+
+        const entity = ensureEntityFromOperation(state, operation);
+
+        if (!entity) {
+          return;
+        }
+
+        if (operation.changeType === 'edit' || operation.changeType === 'status') {
+          (operation.changes || []).forEach((change) => {
+            if (!change.fieldPath || change.fieldPath === '$record') {
+              return;
+            }
+
+            setValueByPath(entity, change.fieldPath, change.afterRaw);
+          });
+        }
 
         entity.updatedAt = getOperationSortTime(operation) || entity.updatedAt || new Date().toISOString();
       });
@@ -5853,6 +5990,92 @@
       };
     }
 
+    function countRecordsForPurgeSummary() {
+      return {
+        families: (appState.collections?.families || []).length,
+        forms: (appState.collections?.forms || []).length,
+        timelineEvents: (appState.collections?.timelineEvents || []).length,
+        resourceRecords: (appState.collections?.resourceRecords || []).length,
+        evolutionRecords: (appState.collections?.evolutionRecords || []).length,
+        appointments: (appState.collections?.appointments || []).length,
+        auditLogs: (appState.collections?.auditLogs || []).length,
+        reports: (appState.collections?.reports || []).length,
+        users: (appState.security?.users || []).length
+      };
+    }
+
+    function savePurgeManifestLocally(purgeLog) {
+      try {
+        const currentHistory = JSON.parse(localStorage.getItem(purgeAuditKey) || '[]');
+        const nextHistory = Array.isArray(currentHistory) ? currentHistory : [];
+        nextHistory.push(cloneStateValue(purgeLog));
+        localStorage.setItem(purgeAuditKey, JSON.stringify(nextHistory.slice(-50)));
+      } catch (error) {
+        console.warn('Não foi possível gravar o manifesto local de expurgo.', error);
+        localStorage.setItem(purgeAuditKey, JSON.stringify([cloneStateValue(purgeLog)]));
+      }
+    }
+
+    function createPurgeAuditLog(counts = {}) {
+      const auditUser = getCurrentAuditUser();
+      const localCreatedAt = new Date().toISOString();
+      const operationId = createId('op');
+      const purgeSummary = {
+        reason: 'Expurgo administrativo acionado pelo botão Apagar todos os registros.',
+        scope: 'snapshot, histórico operacional, arquivos de operação do Google Drive, usuários locais e sessões salvas',
+        preserved: 'metadados e opções editáveis do sistema; manifesto formal do expurgo',
+        counts: cloneStateValue(counts),
+        deviceId: getDeviceId(),
+        userId: auditUser.id,
+        username: auditUser.username,
+        localCreatedAt
+      };
+
+      return normalizeAuditLogEntry({
+        id: createId('audit'),
+        operationId,
+        action: 'Expurgo administrativo completo',
+        changeType: 'system_purge',
+        entityType: 'Sistema',
+        entityId: 'system-purge',
+        title: 'Expurgo administrativo: todos os registros foram apagados',
+        createdAt: localCreatedAt,
+        localCreatedAt,
+        timeSource: 'device_pending_google_drive',
+        syncStatus: 'pending',
+        userId: auditUser.id,
+        username: auditUser.username,
+        deviceId: getDeviceId(),
+        tombstone: true,
+        purgeSummary,
+        changes: [
+          {
+            label: 'Escopo do expurgo',
+            fieldPath: '$system.purge.scope',
+            before: 'Base ativa com registros, histórico, usuários e backup remoto quando existente',
+            after: 'Base reiniciada; apenas metadados/opções e manifesto de expurgo preservados',
+            beforeRaw: cloneStateValue(counts),
+            afterRaw: cloneStateValue({ preserved: purgeSummary.preserved }),
+            valueType: 'text',
+            persisted: true,
+            conflict: false,
+            overriddenBy: null
+          }
+        ],
+        newRecord: [
+          { label: 'Ação', value: 'Expurgo administrativo completo' },
+          { label: 'Usuário', value: auditUser.username },
+          { label: 'Dispositivo', value: getDeviceId() },
+          { label: 'Data/hora local', value: formatAuditDateTime(localCreatedAt) },
+          { label: 'Famílias apagadas', value: counts.families || 0 },
+          { label: 'Históricos apagados', value: counts.auditLogs || 0 },
+          { label: 'Usuários apagados', value: counts.users || 0 }
+        ],
+        fullRecordRaw: purgeSummary,
+        deletedRaw: purgeSummary
+      });
+    }
+
     async function deleteAllRecordsWithPassword() {
       const password = window.prompt('Digite a senha para apagar todos os registros:');
 
@@ -5866,7 +6089,14 @@
         return;
       }
 
-      const confirmed = window.confirm('Senha confirmada. Esta ação apagará todos os registros locais, histórico de alterações, usuários, sessões salvas e também o backup do Google Drive. Apenas os metadados/opções editáveis serão preservados. Deseja continuar?');
+      const typedConfirmation = window.prompt('Confirmação final: digite APAGAR TUDO para executar o expurgo administrativo.');
+
+      if (typedConfirmation !== 'APAGAR TUDO') {
+        setDeleteAllRecordsStatus('Confirmação final não informada corretamente. Nenhum registro foi apagado.', 'idle');
+        return;
+      }
+
+      const confirmed = window.confirm('Esta ação fará um expurgo administrativo: apagará registros locais, histórico antigo, usuários, sessões salvas, snapshot e arquivos de operação do Google Drive. Um manifesto técnico do expurgo será preservado localmente e no novo backup. Deseja continuar?');
 
       if (!confirmed) {
         setDeleteAllRecordsStatus('Exclusão cancelada. Nenhum registro foi apagado.', 'idle');
@@ -5884,7 +6114,7 @@
           return;
         }
 
-        const authorizeDriveDeletion = window.confirm('Para apagar também o backup do Google Drive, autorize a conexão com o Google agora. Continuar?');
+        const authorizeDriveDeletion = window.confirm('Para apagar também o backup do Google Drive e registrar o manifesto do expurgo, autorize a conexão com o Google agora. Continuar?');
 
         if (!authorizeDriveDeletion) {
           setDeleteAllRecordsStatus('Exclusão cancelada. O backup do Google Drive não foi apagado.', 'idle');
@@ -5910,8 +6140,12 @@
       pendingDriveSave = false;
       pendingDriveSaveOptions = {};
 
+      const previousMetadata = cloneStateValue(appState.metadata || {});
+      const purgeLog = createPurgeAuditLog(countRecordsForPurgeSummary());
+      savePurgeManifestLocally(purgeLog);
+
       try {
-        setDeleteAllRecordsStatus('Apagando backup do Google Drive...', 'syncing');
+        setDeleteAllRecordsStatus('Apagando snapshot e operações antigas do Google Drive...', 'syncing');
         await deleteDriveBackupFromGoogleDrive();
       } catch (error) {
         console.warn('Não foi possível apagar o backup do Google Drive.', error);
@@ -5919,7 +6153,6 @@
         return;
       }
 
-      const previousMetadata = appState.metadata || {};
       const emptyState = createDefaultState();
 
       appState = normalizeState({
@@ -5941,10 +6174,31 @@
           resourceRecords: [],
           evolutionRecords: [],
           appointments: [],
-          auditLogs: [],
+          auditLogs: [purgeLog],
           reports: []
+        },
+        extensions: {
+          ...emptyState.extensions,
+          purge: {
+            lastPurgeOperationId: purgeLog.operationId,
+            lastPurgeLocalCreatedAt: purgeLog.localCreatedAt,
+            lastPurgeDeviceId: purgeLog.deviceId
+          }
         }
       });
+
+      let purgeManifestSynced = true;
+
+      try {
+        setDeleteAllRecordsStatus('Registrando manifesto formal do expurgo no Google Drive...', 'syncing');
+        const metadata = await createDriveOperationFile(purgeLog);
+        markOperationSyncedWithDrive(purgeLog.operationId, metadata);
+        localStorage.setItem(storageKey, JSON.stringify(appState));
+        await createDriveStateFile(appState);
+      } catch (error) {
+        purgeManifestSynced = false;
+        console.warn('Não foi possível registrar o manifesto do expurgo no Google Drive.', error);
+      }
 
       activeViewedFamilyId = null;
       activeEditingResourceRecordId = null;
@@ -5999,7 +6253,12 @@
       }
 
       saveAppState({ skipDrive: true });
-      setDeleteAllRecordsStatus('Todos os registros foram apagados e o backup do Google Drive foi excluído. Apenas metadados/opções foram preservados.', 'connected');
+      setDeleteAllRecordsStatus(
+        purgeManifestSynced
+          ? 'Todos os registros foram apagados. O manifesto formal do expurgo foi preservado localmente e no Google Drive.'
+          : 'Todos os registros foram apagados. O manifesto formal do expurgo ficou salvo localmente, mas não foi registrado no Google Drive.',
+        purgeManifestSynced ? 'connected' : 'error'
+      );
       setLoginStatus('Todos os registros foram apagados. Registre um novo usuário para acessar o sistema.', 'success');
       resetNavigationHistory();
       showScreen('login-screen', { recordHistory: false });
@@ -6059,6 +6318,7 @@
       renderReports();
       renderManagedOptionSelects();
       updateFamilyComputedFields();
+      updateOfflineSyncBanner();
       if (dataPreview) {
         dataPreview.textContent = JSON.stringify(createDisplayPreviewState(appState), null, 2);
       }
@@ -6560,7 +6820,24 @@
           familyId: record.familyId,
           familyTitle: record.familyTitle || '',
           title: `Recurso apagado: ${record.title || record.servico || record.item || 'registro sem título'}`,
-          newRecord: createResourceAuditFields(record)
+          newRecord: createResourceAuditFields(record),
+          fullRecordRaw: cloneStateValue(record),
+          deletedRaw: cloneStateValue(record),
+          tombstone: true,
+          changes: [
+            {
+              label: 'Registro de recurso',
+              fieldPath: '$record',
+              before: record.title || record.servico || record.item || 'Registro existente',
+              after: 'Registro excluído',
+              beforeRaw: cloneStateValue(record),
+              afterRaw: null,
+              valueType: 'record',
+              persisted: true,
+              conflict: false,
+              overriddenBy: null
+            }
+          ]
         });
         appState.collections.resourceRecords = (appState.collections.resourceRecords || []).filter((item) => item.id !== id);
         removeTimelineEventsForDeletedRecord(kind, id);
@@ -6577,7 +6854,24 @@
           familyId: record.familyId,
           familyTitle: record.familyTitle || '',
           title: `Evolução apagada: ${record.familyTitle || 'família sem nome'}`,
-          newRecord: createEvolutionAuditFields(record)
+          newRecord: createEvolutionAuditFields(record),
+          fullRecordRaw: cloneStateValue(record),
+          deletedRaw: cloneStateValue(record),
+          tombstone: true,
+          changes: [
+            {
+              label: 'Evolução',
+              fieldPath: '$record',
+              before: record.contentText || 'Registro existente',
+              after: 'Registro excluído',
+              beforeRaw: cloneStateValue(record),
+              afterRaw: null,
+              valueType: 'record',
+              persisted: true,
+              conflict: false,
+              overriddenBy: null
+            }
+          ]
         });
         appState.collections.evolutionRecords = (appState.collections.evolutionRecords || []).filter((item) => item.id !== id);
         removeTimelineEventsForDeletedRecord(kind, id);
@@ -6594,7 +6888,24 @@
           familyId: record.familyId,
           familyTitle: record.familyTitle || '',
           title: `Agendamento apagado: ${record.familyTitle || 'família sem nome'}`,
-          newRecord: createAppointmentAuditFields(record)
+          newRecord: createAppointmentAuditFields(record),
+          fullRecordRaw: cloneStateValue(record),
+          deletedRaw: cloneStateValue(record),
+          tombstone: true,
+          changes: [
+            {
+              label: 'Agendamento',
+              fieldPath: '$record',
+              before: record.description || record.title || 'Registro existente',
+              after: 'Registro excluído',
+              beforeRaw: cloneStateValue(record),
+              afterRaw: null,
+              valueType: 'record',
+              persisted: true,
+              conflict: false,
+              overriddenBy: null
+            }
+          ]
         });
         appState.collections.appointments = (appState.collections.appointments || []).filter((item) => item.id !== id);
         removeTimelineEventsForDeletedRecord(kind, id);
@@ -8700,6 +9011,60 @@
       }
     }
 
+    function isBrowserOffline() {
+      return navigator.onLine === false;
+    }
+
+    function hasPendingDriveOperations() {
+      return Boolean(
+        pendingDriveSave ||
+        (appState.collections?.auditLogs || []).some((log) => log.syncStatus !== 'synced' || !log.driveCreatedAt)
+      );
+    }
+
+    function getOfflineSyncBannerMessage() {
+      if (isBrowserOffline()) {
+        return 'Modo local: sem internet. As alterações salvas ficarão neste dispositivo e serão mescladas com o Google Drive quando a conexão voltar, mantendo a alteração mais recente por data/hora. <br> ENQUANTO VOCÊ NÃO SINCRONIZAR COM A INTERNET AS ALTERAÇÕES FICARAM APENAS NO SEU DISPOSITIVO!!';
+      }
+
+      if (localOfflineAccessActive || hasPendingDriveOperations()) {
+        return 'Alterações locais pendentes: conecte/sincronize o Google Drive. Ao sincronizar, o histórico local será mesclado com o Drive e vencerá a alteração mais recente por data/hora.';
+      }
+
+      return '';
+    }
+
+    function updateOfflineSyncBanner() {
+      if (!offlineSyncBanner) {
+        return;
+      }
+
+      const authenticated = isAuthenticated();
+      const shouldShow = authenticated && (isBrowserOffline() || localOfflineAccessActive || hasPendingDriveOperations());
+
+      offlineSyncBanner.hidden = !shouldShow;
+
+      if (shouldShow) {
+        const message = getOfflineSyncBannerMessage();
+        offlineSyncBanner.innerHTML = `<strong>${isBrowserOffline() ? 'Modo local/offline' : 'Sincronização pendente'}:</strong> ${message.replace(/^Modo local:\s*/i, '').replace(/^Alterações locais pendentes:\s*/i, '')}`;
+      }
+    }
+
+    function activateLocalOfflineMode(message = 'Sem internet. Modo local liberado; alterações serão mescladas com o Google Drive quando a conexão voltar.') {
+      localOfflineAccessActive = true;
+      pendingDriveSave = true;
+      setSyncStatus(message, 'error');
+      updateOfflineSyncBanner();
+    }
+
+    function clearLocalOfflineModeAfterSync() {
+      if (!isBrowserOffline() && !hasPendingDriveOperations()) {
+        localOfflineAccessActive = false;
+      }
+
+      updateOfflineSyncBanner();
+    }
+
     function setSyncStatus(message, state = 'idle') {
       headerSyncStatus.textContent = message;
       headerSyncStatus.dataset.state = state;
@@ -8713,6 +9078,8 @@
         loginDriveSyncStatus.textContent = message;
         loginDriveSyncStatus.dataset.state = state;
       }
+
+      updateOfflineSyncBanner();
     }
 
     function setDeleteAllRecordsStatus(message, state = 'idle') {
@@ -8835,6 +9202,11 @@
     }
 
     async function requestGoogleDriveAccess(options = {}) {
+      if (isBrowserOffline()) {
+        activateLocalOfflineMode('Sem internet. O Google Drive não será aberto agora; o sistema ficará em modo local até a conexão voltar.');
+        return false;
+      }
+
       const initialized = await initGoogleDriveAuth();
 
       if (!initialized) {
@@ -8845,9 +9217,9 @@
         return true;
       }
 
-      const prompt = options.silent ? '' : 'consent';
+      const prompt = options.silent ? '' : 'select_account consent';
       pendingDriveAuthOptions = { ...options };
-      setSyncStatus(options.silent ? 'Tentando reconectar ao Google Drive...' : 'Abrindo autorização do Google Drive...', 'syncing');
+      setSyncStatus(options.silent ? 'Tentando reconectar ao Google Drive...' : 'Escolha a conta Google correta para sincronizar o Drive...', 'syncing');
 
       return new Promise((resolve, reject) => {
         const timeoutId = setTimeout(() => {
@@ -9232,6 +9604,8 @@
           pendingDriveSave = true;
         }
 
+        localOfflineAccessActive = false;
+        clearLocalOfflineModeAfterSync();
         setSyncStatus('Snapshot e histórico do Google Drive carregados e consolidados.', 'connected');
       } finally {
         isDriveBusy = false;
@@ -9303,6 +9677,8 @@
 
         pendingDriveSave = false;
         pendingDriveSaveOptions = {};
+        localOfflineAccessActive = false;
+        clearLocalOfflineModeAfterSync();
         setSyncStatus('Google Drive sincronizado com snapshot e histórico.', 'connected');
       } finally {
         isDriveBusy = false;
@@ -9655,7 +10031,65 @@
       return false;
     }
 
-    function handleLogin(event) {
+    async function syncWithDriveBeforeReleasingAccess(options = {}) {
+      const allowPrompt = options.allowPrompt !== false;
+
+      if (isBrowserOffline()) {
+        activateLocalOfflineMode('Sem internet. Entrada local liberada; alterações serão mescladas com o Google Drive quando a conexão voltar.');
+        setLoginStatus('Sem internet detectada. Entrada local liberada; alterações salvas serão mescladas com o Google Drive pela última data/hora quando a conexão voltar.', 'success');
+        return true;
+      }
+
+      if (!isGoogleDriveConfigured()) {
+        localOfflineAccessActive = true;
+        pendingDriveSave = true;
+        setLoginStatus('Google Drive não configurado. Entrada local liberada, mas sem sincronização remota.', 'error');
+        updateOfflineSyncBanner();
+        return true;
+      }
+
+      try {
+        setLoginStatus('Sincronizando com Google Drive antes de liberar o sistema...', 'syncing');
+
+        if (googleAccessToken) {
+          await loadStateFromDrive({ saveAfterMerge: true });
+        } else {
+          await requestGoogleDriveAccess({ silent: !allowPrompt });
+        }
+
+        if (!googleAccessToken) {
+          if (isBrowserOffline()) {
+            activateLocalOfflineMode('Sem internet. Entrada local liberada; alterações serão mescladas com o Google Drive quando a conexão voltar.');
+            setLoginStatus('Sem internet detectada. Entrada local liberada; alterações salvas serão mescladas com o Google Drive pela última data/hora quando a conexão voltar.', 'success');
+            return true;
+          }
+
+          throw new Error('Google Drive não autorizado.');
+        }
+
+        if (pendingDriveSave) {
+          await saveStateToDrive({ mergeBeforeSave: false });
+        }
+
+        localOfflineAccessActive = false;
+        clearLocalOfflineModeAfterSync();
+        setLoginStatus('Google Drive sincronizado. Liberando acesso...', 'success');
+        return true;
+      } catch (error) {
+        console.warn('Não foi possível sincronizar com Google Drive antes do acesso.', error);
+
+        if (isBrowserOffline()) {
+          activateLocalOfflineMode('Sem internet. Entrada local liberada; alterações serão mescladas com o Google Drive quando a conexão voltar.');
+          setLoginStatus('Sem internet detectada. Entrada local liberada; alterações salvas serão mescladas com o Google Drive pela última data/hora quando a conexão voltar.', 'success');
+          return true;
+        }
+
+        setLoginStatus('Não foi possível sincronizar com o Google Drive. Conecte o Drive antes de entrar ou entre novamente quando estiver sem internet para usar o modo local.', 'error');
+        return false;
+      }
+    }
+
+    async function handleLogin(event) {
       event.preventDefault();
 
       const username = normalizeUsername(loginUsernameInput?.value);
@@ -9680,8 +10114,35 @@
         return;
       }
 
-      setAuthenticatedUser(user);
-      setLoginStatus(`Entrada realizada: ${user.username}.`, 'success');
+      if (loginForm) {
+        loginForm.querySelectorAll('button, input').forEach((element) => {
+          element.disabled = true;
+        });
+      }
+
+      const canEnter = await syncWithDriveBeforeReleasingAccess({ allowPrompt: true });
+
+      if (loginForm) {
+        loginForm.querySelectorAll('button, input').forEach((element) => {
+          element.disabled = false;
+        });
+      }
+
+      if (!canEnter) {
+        loginPasswordInput?.focus();
+        return;
+      }
+
+      const syncedUser = findUserByUsername(username);
+
+      if (!syncedUser || !isPasswordValid(syncedUser, password) || !isUserActive(syncedUser)) {
+        setLoginStatus('Após sincronizar com o Drive, este usuário não está mais ativo ou os dados de acesso mudaram.', 'error');
+        loginPasswordInput?.focus();
+        return;
+      }
+
+      setAuthenticatedUser(syncedUser);
+      setLoginStatus(`Entrada realizada: ${syncedUser.username}.`, 'success');
       if (loginPasswordInput) {
         loginPasswordInput.value = '';
       }
@@ -9921,6 +10382,7 @@
       }
 
       const optionSet = getOptionSet(optionSetKey);
+      const beforeOptions = cloneStateValue(optionSet.options || []);
       const alreadyExists = optionSet.options.some((option) => {
         return option.toLocaleLowerCase('pt-BR') === normalizedValue.toLocaleLowerCase('pt-BR');
       });
@@ -9931,17 +10393,37 @@
         return;
       }
 
-      optionSet.options.push(normalizedValue);
-      optionSet.options = uniqueOptionValues(optionSet.options);
+      const afterOptions = uniqueOptionValues([...optionSet.options, normalizedValue]);
+      optionSet.options = afterOptions;
       addAuditLog({
         action: 'Adicionou opção',
         changeType: 'create',
-        entityType: 'Opção do sistema',
+        entityType: 'Configuração',
+        entityId: `optionSets.${optionSetKey}`,
         title: `Opção adicionada: ${normalizedValue}`,
+        changes: [
+          {
+            label: `Opções de ${optionSet.label || optionSetKey}`,
+            fieldPath: `metadata.optionSets.${optionSetKey}.options`,
+            before: beforeOptions.length ? beforeOptions.join(', ') : 'Nenhuma opção cadastrada',
+            after: afterOptions.join(', '),
+            beforeRaw: beforeOptions,
+            afterRaw: cloneStateValue(afterOptions),
+            valueType: 'list',
+            persisted: true,
+            conflict: false,
+            overriddenBy: null
+          }
+        ],
         newRecord: [
           { label: 'Campo', value: optionSet.label || optionSetKey },
           { label: 'Nova opção', value: normalizedValue }
-        ]
+        ],
+        fullRecordRaw: {
+          optionSetKey,
+          label: optionSet.label || optionSetKey,
+          options: cloneStateValue(afterOptions)
+        }
       });
       saveAppState();
       renderManagedOptionSelects();
@@ -9952,18 +10434,47 @@
 
     function deleteOptionValue(optionSetKey, optionValue) {
       const optionSet = getOptionSet(optionSetKey);
-      optionSet.options = optionSet.options.filter((option) => option !== optionValue);
+      const beforeOptions = cloneStateValue(optionSet.options || []);
+      const afterOptions = optionSet.options.filter((option) => option !== optionValue);
+      optionSet.options = afterOptions;
       addAuditLog({
         action: 'Excluiu opção',
         changeType: 'delete',
-        entityType: 'Opção do sistema',
+        entityType: 'Configuração',
+        entityId: `optionSets.${optionSetKey}`,
         title: `Opção excluída: ${optionValue}`,
+        tombstone: true,
+        changes: [
+          {
+            label: `Opções de ${optionSet.label || optionSetKey}`,
+            fieldPath: `metadata.optionSets.${optionSetKey}.options`,
+            before: beforeOptions.length ? beforeOptions.join(', ') : 'Nenhuma opção cadastrada',
+            after: afterOptions.length ? afterOptions.join(', ') : 'Nenhuma opção cadastrada',
+            beforeRaw: beforeOptions,
+            afterRaw: cloneStateValue(afterOptions),
+            valueType: 'list',
+            persisted: true,
+            conflict: false,
+            overriddenBy: null
+          }
+        ],
         newRecord: [
           { label: 'Campo', value: optionSet.label || optionSetKey },
           { label: 'Opção excluída', value: optionValue }
-        ]
+        ],
+        fullRecordRaw: {
+          optionSetKey,
+          label: optionSet.label || optionSetKey,
+          options: cloneStateValue(afterOptions)
+        },
+        deletedRaw: {
+          optionSetKey,
+          label: optionSet.label || optionSetKey,
+          deletedOption: optionValue,
+          previousOptions: beforeOptions
+        }
       });
-      saveAppState({ forceOverwrite: true });
+      saveAppState();
       renderManagedOptionSelects();
       renderOptionManagerList();
     }
@@ -12223,8 +12734,10 @@
       const labels = {
         create: 'Novo registro',
         edit: 'Edição',
+        status: 'Status',
         delete: 'Exclusão',
-        system: 'Sistema'
+        system: 'Sistema',
+        system_purge: 'Expurgo formal'
       };
 
       return labels[changeType] || 'Alteração';
@@ -12315,7 +12828,10 @@
         deviceId: entry.deviceId || getDeviceId(),
         changes: Array.isArray(entry.changes) ? entry.changes.map(normalizeAuditChange).filter((change) => change.label) : [],
         newRecord: normalizeAuditFields(entry.newRecord || []),
-        fullRecordRaw: entry.fullRecordRaw || cloneStateValue(getAuditEntityFullRecord(entry.entityType, entry.entityId))
+        fullRecordRaw: Object.prototype.hasOwnProperty.call(entry, 'fullRecordRaw') ? cloneStateValue(entry.fullRecordRaw) : cloneStateValue(getAuditEntityFullRecord(entry.entityType, entry.entityId)),
+        deletedRaw: Object.prototype.hasOwnProperty.call(entry, 'deletedRaw') ? cloneStateValue(entry.deletedRaw) : null,
+        tombstone: entry.tombstone === true,
+        purgeSummary: entry.purgeSummary && typeof entry.purgeSummary === 'object' ? cloneStateValue(entry.purgeSummary) : null
       };
 
       appState.collections.auditLogs.push(normalizedEntry);
@@ -13824,9 +14340,10 @@
     });
 
     function handleDriveConnectionRequest() {
-      requestGoogleDriveAccess({ silent: false }).catch((error) => {
+      googleAccessToken = null;
+      requestGoogleDriveAccess({ silent: false, forceRefresh: true }).catch((error) => {
         console.warn('Erro ao conectar Google Drive.', error);
-        setSyncStatus('Erro ao conectar Google Drive.', 'error');
+        setSyncStatus('Erro ao conectar Google Drive. Verifique se você escolheu a conta Google correta.', 'error');
       });
     }
 
@@ -13889,23 +14406,51 @@
       }
     });
 
-    window.addEventListener('load', () => {
-      if (localStorage.getItem(drivePreferenceKey) === 'true' && isGoogleDriveConfigured()) {
-        requestGoogleDriveAccess({ silent: true }).catch((error) => {
-          console.warn('Não foi possível reconectar automaticamente.', error);
-          setSyncStatus('Toque para reconectar o Google Drive.', 'error');
-        });
+    window.addEventListener('offline', () => {
+      activateLocalOfflineMode('Sem internet. Modo local ativo; alterações serão mescladas com o Google Drive quando a conexão voltar.');
+    });
+
+    window.addEventListener('online', () => {
+      setSyncStatus('Internet restabelecida. Conecte ou sincronize o Google Drive para mesclar as alterações locais.', 'syncing');
+      updateOfflineSyncBanner();
+
+      if (googleAccessToken) {
+        loadStateFromDrive({ saveAfterMerge: true })
+          .then(() => saveStateToDrive({ mergeBeforeSave: false }))
+          .catch((error) => {
+            console.warn('Não foi possível sincronizar automaticamente após a internet voltar.', error);
+            setSyncStatus('Internet voltou, mas não foi possível sincronizar automaticamente. Clique em Sincronizar agora.', 'error');
+          });
       }
     });
 
-    loadLocalState();
-    renderApp();
+    window.addEventListener('load', () => {
+      if (localStorage.getItem(drivePreferenceKey) === 'true' && isGoogleDriveConfigured()) {
+        setSyncStatus('Google Drive usado anteriormente neste navegador. Faça login e escolha a conta correta para sincronizar.', 'idle');
+      }
+    });
 
-    if (restoreLoginSession()) {
-      showScreen('home-screen', { recordHistory: false });
-    } else {
-      showScreen('login-screen', { recordHistory: false });
+    async function initializeApp() {
+      loadLocalState();
+      renderApp();
+
+      if (restoreLoginSession()) {
+        showScreen('login-screen', { recordHistory: false });
+        setLoginStatus('Sessão anterior encontrada. Sincronizando com o Google Drive antes de liberar o sistema...', 'syncing');
+        const canEnter = await syncWithDriveBeforeReleasingAccess({ allowPrompt: false });
+
+        if (canEnter) {
+          showScreen('home-screen', { recordHistory: false });
+        } else {
+          setAuthenticatedUser(null);
+          showScreen('login-screen', { recordHistory: false });
+        }
+      } else {
+        showScreen('login-screen', { recordHistory: false });
+      }
     }
+
+    initializeApp();
 
     if (!isGoogleDriveConfigured()) {
       setSyncStatus('Configure o Client ID do Google Drive.', 'error');
