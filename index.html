@@ -675,6 +675,22 @@
       white-space: nowrap;
     }
 
+
+    .appointment-list-toolbar:not(.family-inline-appointment-toolbar) #appointment-month-label.appointment-month-jump-button {
+      cursor: pointer;
+    }
+
+    .appointment-list-toolbar:not(.family-inline-appointment-toolbar) #appointment-month-label.appointment-month-jump-button:hover,
+    .appointment-list-toolbar:not(.family-inline-appointment-toolbar) #appointment-month-label.appointment-month-jump-button:focus-visible {
+      opacity: 0.9;
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .appointment-month-jump-modal .modal-dialog {
+      width: min(460px, 100%);
+    }
+
     .appointment-filter-row {
       margin-top: 12px;
       display: grid;
@@ -938,6 +954,94 @@
 
     #appointment-screen .hero {
       margin-bottom: 18px;
+    }
+
+    .appointment-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      max-width: 820px;
+    }
+
+    .appointment-summary-card {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: 0 8px 22px rgba(23, 23, 23, 0.05);
+      display: grid;
+      gap: 10px;
+    }
+
+    .appointment-summary-heading {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .appointment-summary-title {
+      margin: 0;
+      color: var(--text);
+      font-size: 0.98rem;
+      line-height: 1.15;
+      font-weight: 950;
+      letter-spacing: -0.02em;
+    }
+
+    .appointment-summary-period {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 900;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .appointment-summary-statuses {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 7px;
+    }
+
+    .appointment-summary-status {
+      min-height: 58px;
+      padding: 8px 7px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--surface-muted);
+      display: grid;
+      align-content: center;
+      gap: 3px;
+      text-align: center;
+    }
+
+    .appointment-summary-value {
+      color: var(--text);
+      font-size: 1.2rem;
+      line-height: 1;
+      font-weight: 950;
+      letter-spacing: -0.04em;
+    }
+
+    .appointment-summary-label {
+      color: var(--muted);
+      font-size: 0.72rem;
+      line-height: 1.1;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    @media (max-width: 760px) {
+      .appointment-summary-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .appointment-summary-statuses {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
     }
 
     #appointment-screen .panel {
@@ -1539,6 +1643,7 @@
     }
 
     .family-form-header-row .edit-family-button,
+    .family-form-header-row #top-cancel-family-edit-button,
     .family-form-header-row #top-save-family-button {
       flex: 0 0 auto;
       align-self: center;
@@ -2681,6 +2786,8 @@
 
     .edit-family-button[hidden],
     .confirm-edit-button[hidden],
+    .cancel-family-edit-button[hidden],
+    #top-cancel-family-edit-button[hidden],
     #top-save-family-button[hidden] {
       display: none !important;
     }
@@ -2689,6 +2796,37 @@
       color: var(--muted);
       font-size: 0.9rem;
       font-weight: 800;
+    }
+
+
+    /* Garante que os botões Cancelar apareçam ao lado de Salvar família somente durante a edição da Ficha familiar. */
+    #add-family-screen.edit-mode .family-form-header-actions,
+    #add-family-screen.edit-mode .form-actions {
+      display: flex !important;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #add-family-screen.edit-mode .family-form-header-actions {
+      justify-content: flex-end;
+    }
+
+    #add-family-screen.edit-mode .form-actions {
+      justify-content: flex-end;
+    }
+
+    #add-family-screen.edit-mode .family-form-header-actions .cancel-family-edit-button,
+    #add-family-screen.edit-mode .family-form-header-actions #top-save-family-button,
+    #add-family-screen.edit-mode .form-actions .cancel-family-edit-button,
+    #add-family-screen.edit-mode .form-actions button[type="submit"] {
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+    }
+
+    #add-family-screen.edit-mode .family-form-header-actions .edit-family-button {
+      display: none !important;
     }
 
 
@@ -2960,6 +3098,7 @@
       }
 
       .family-form-header-row .edit-family-button,
+      .family-form-header-row #top-cancel-family-edit-button,
       .family-form-header-row #top-save-family-button {
         width: auto;
       }
@@ -3374,6 +3513,7 @@
                 </div>
                 <div class="family-form-header-actions" aria-label="Ações principais da ficha familiar">
                   <button class="plain-button edit-family-button" id="edit-family-button" type="button" hidden>Editar</button>
+                  <button class="plain-button cancel-family-edit-button" id="top-cancel-family-edit-button" type="button" hidden>Cancelar</button>
                   <button class="solid-button" id="top-save-family-button" type="submit" hidden>Salvar família</button>
                 </div>
               </div>
@@ -3563,6 +3703,7 @@
             </section>
 
             <div class="form-actions">
+              <button class="plain-button cancel-family-edit-button" id="cancel-family-edit-button" type="button" hidden>Cancelar</button>
               <button class="solid-button" type="submit">Salvar família</button>
             </div>
           </form>
@@ -3635,7 +3776,7 @@
         <div class="hero">
           <span class="eyebrow">Agendamento</span>
           <h1 id="appointment-title">Agendamento</h1>
-          <p class="hero-text">Cadastre agendamentos por data, representante familiar e descrição. Acompanhe a lista mensal e atualize o status de cada atendimento.</p>
+          <div class="appointment-summary-grid" id="appointment-summary-grid" aria-live="polite"></div>
         </div>
 
         <div class="appointment-layout">
@@ -3648,7 +3789,7 @@
                 <div class="appointment-month-actions" aria-label="Ações e navegação de meses">
                   <button class="solid-button" id="add-appointment-button" type="button">Adicionar agendamento</button>
                   <button class="plain-button" id="appointment-prev-month" type="button" aria-label="Mês anterior">&lt;</button>
-                  <p class="panel-description" id="appointment-month-label">Mês atual</p>
+                  <button class="panel-description appointment-month-jump-button" id="appointment-month-label" type="button" aria-haspopup="dialog" aria-controls="appointment-month-jump-modal" title="Escolher outro mês e ano">Mês atual</button>
                   <button class="plain-button" id="appointment-next-month" type="button" aria-label="Próximo mês">&gt;</button>
                 </div>
               </div>
@@ -3665,6 +3806,24 @@
           </section>
         </div>
       </section>
+
+      <div class="modal-backdrop appointment-month-jump-modal" id="appointment-month-jump-modal" role="dialog" aria-modal="true" aria-labelledby="appointment-month-jump-title" aria-describedby="appointment-month-jump-description">
+        <div class="modal-dialog">
+          <form class="modal-form" id="appointment-month-jump-form" autocomplete="off">
+            <h2 id="appointment-month-jump-title">Ir para mês e ano</h2>
+            <p id="appointment-month-jump-description">Selecione o mês e o ano que deseja visualizar na lista de agendamentos.</p>
+            <div class="field">
+              <label for="appointment-month-jump-input">Mês e ano</label>
+              <input id="appointment-month-jump-input" name="mesAno" type="month" required>
+            </div>
+            <span class="status-line" id="appointment-month-jump-status" data-state="idle" role="status"></span>
+            <div class="modal-actions">
+              <button class="plain-button" id="appointment-month-jump-cancel" type="button">Cancelar</button>
+              <button class="solid-button" type="submit">Visualizar</button>
+            </div>
+          </form>
+        </div>
+      </div>
 
       <section class="screen" id="timeline-screen" data-title="Linha do tempo" aria-labelledby="timeline-title">
         <div class="back-row">
@@ -4275,6 +4434,8 @@
     const familyIncomePerCapita = document.querySelector('#family-income-per-capita');
     const familyFormStatus = document.querySelector('#family-form-status');
     const familySubmitButton = familyForm?.querySelector('.form-actions button[type="submit"]');
+    const cancelFamilyEditButton = document.querySelector('#cancel-family-edit-button');
+    const topCancelFamilyEditButton = document.querySelector('#top-cancel-family-edit-button');
     const topSaveFamilyButton = document.querySelector('#top-save-family-button');
     const registerResourceButton = document.querySelector('#register-resource-button');
     const evolutionButton = document.querySelector('#evolution-button');
@@ -4299,6 +4460,12 @@
     const appointmentDescriptionInput = document.querySelector('#appointment-description');
     const appointmentFormStatus = document.querySelector('#appointment-form-status');
     const appointmentMonthLabel = document.querySelector('#appointment-month-label');
+    const appointmentMonthJumpModal = document.querySelector('#appointment-month-jump-modal');
+    const appointmentMonthJumpForm = document.querySelector('#appointment-month-jump-form');
+    const appointmentMonthJumpInput = document.querySelector('#appointment-month-jump-input');
+    const appointmentMonthJumpStatus = document.querySelector('#appointment-month-jump-status');
+    const appointmentMonthJumpCancelButton = document.querySelector('#appointment-month-jump-cancel');
+    const appointmentSummaryGrid = document.querySelector('#appointment-summary-grid');
     const addAppointmentButton = document.querySelector('#add-appointment-button');
     const appointmentPrevMonthButton = document.querySelector('#appointment-prev-month');
     const appointmentNextMonthButton = document.querySelector('#appointment-next-month');
@@ -5161,13 +5328,81 @@
       return monthText.charAt(0).toUpperCase() + monthText.slice(1);
     }
 
-    function getAppointmentStatusLabel(status) {
+    function isAppointmentPastDate(dateValue) {
+      const normalizedDate = normalizeDateValue(dateValue);
+      return Boolean(normalizedDate && normalizedDate < getTodayValue());
+    }
+
+    function isAppointmentScheduledStatus(status) {
+      const normalizedStatus = String(status || '').trim();
+      return !normalizedStatus || normalizedStatus === 'agendado' || normalizedStatus === 'desatualizado';
+    }
+
+    function getAppointmentEffectiveStatus(recordOrStatus, dateValue = '') {
+      const status = typeof recordOrStatus === 'object' && recordOrStatus !== null
+        ? String(recordOrStatus.status || '').trim()
+        : String(recordOrStatus || '').trim();
+      const appointmentDate = typeof recordOrStatus === 'object' && recordOrStatus !== null
+        ? recordOrStatus.date
+        : dateValue;
+
+      if (['realizado', 'reagendado', 'ausencia'].includes(status)) {
+        return status;
+      }
+
+      return isAppointmentPastDate(appointmentDate) ? 'desatualizado' : 'agendado';
+    }
+
+    function normalizeAppointmentStatusForDate(status, dateValue) {
+      const normalizedStatus = String(status || '').trim();
+
+      if (['realizado', 'reagendado', 'ausencia'].includes(normalizedStatus)) {
+        return normalizedStatus;
+      }
+
+      return isAppointmentPastDate(dateValue) ? 'desatualizado' : 'agendado';
+    }
+
+    function getAppointmentStatusLabel(status, recordOrDate = '') {
+      const dateValue = typeof recordOrDate === 'object' && recordOrDate !== null ? recordOrDate.date : recordOrDate;
+      const effectiveStatus = getAppointmentEffectiveStatus(status, dateValue);
       const labels = {
+        agendado: 'Agendado',
+        desatualizado: 'Desatualizado',
         realizado: 'Realizado',
         reagendado: 'Reagendado',
         ausencia: 'Ausência'
       };
-      return labels[status] || 'Pendente';
+      return labels[effectiveStatus] || 'Agendado';
+    }
+
+    function getAppointmentStatusOptions(recordOrDate) {
+      const dateValue = typeof recordOrDate === 'object' && recordOrDate !== null ? recordOrDate.date : recordOrDate;
+      const primaryOption = isAppointmentPastDate(dateValue)
+        ? ['desatualizado', 'Desatualizado']
+        : ['agendado', 'Agendado'];
+
+      return [
+        primaryOption,
+        ['realizado', 'Realizado'],
+        ['reagendado', 'Reagendado'],
+        ['ausencia', 'Ausência']
+      ];
+    }
+
+    function renderAppointmentStatusOptions(select, record) {
+      if (!select) {
+        return;
+      }
+
+      select.innerHTML = '';
+      getAppointmentStatusOptions(record).forEach(([value, label]) => {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = label;
+        select.append(option);
+      });
+      select.value = getAppointmentEffectiveStatus(record);
     }
 
     function setAppointmentFormStatus(message, state = 'idle') {
@@ -5238,7 +5473,7 @@
         familyId: formData.familyId,
         familyTitle: formData.familyTitle,
         description: formData.description,
-        status: originalRecord.status || '',
+        status: normalizeAppointmentStatusForDate(originalRecord.status || '', formData.date),
         createdAt: originalRecord.createdAt || updatedAt,
         updatedAt
       };
@@ -6180,7 +6415,7 @@
           familyId: formData.familyId,
           familyTitle: formData.familyTitle,
           description: formData.description,
-          status: '',
+          status: normalizeAppointmentStatusForDate('agendado', formData.date),
           createdAt: now,
           updatedAt: now,
           createdBy: auditUser.id,
@@ -6282,7 +6517,7 @@
         { label: 'Data', value: record.date ? formatDisplayDate(record.date) : '' },
         { label: 'Representante familiar', value: record.familyTitle || '' },
         { label: 'Descrição', value: record.description || '' },
-        { label: 'Status', value: getAppointmentStatusLabel(record.status) },
+        { label: 'Status', value: getAppointmentStatusLabel(record.status, record) },
         { label: 'Usuário do cadastro', value: record.createdByUsername || '' }
       ];
     }
@@ -6332,7 +6567,7 @@
         familyId: family.id,
         familyTitle: getFamilyRepresentativeName(family),
         description,
-        status: '',
+        status: normalizeAppointmentStatusForDate('agendado', date),
         createdAt: now,
         updatedAt: now,
         createdBy: auditUser.id,
@@ -6375,8 +6610,8 @@
         return;
       }
 
-      const previousStatus = record.status || '';
-      const normalizedStatus = String(status || '').trim();
+      const previousStatus = normalizeAppointmentStatusForDate(record.status || '', record.date);
+      const normalizedStatus = normalizeAppointmentStatusForDate(status, record.date);
 
       if (previousStatus === normalizedStatus) {
         return;
@@ -6395,12 +6630,106 @@
         changes: [
           {
             label: 'Status',
-            before: getAppointmentStatusLabel(previousStatus),
-            after: getAppointmentStatusLabel(normalizedStatus)
+            before: getAppointmentStatusLabel(previousStatus, record),
+            after: getAppointmentStatusLabel(normalizedStatus, record)
           }
         ]
       });
       saveAppState();
+    }
+
+    function getAppointmentStatusTotals(records = []) {
+      const totals = {
+        agendado: 0,
+        desatualizado: 0,
+        realizado: 0,
+        reagendado: 0,
+        ausencia: 0
+      };
+
+      records.forEach((record) => {
+        const key = getAppointmentEffectiveStatus(record);
+        if (Object.prototype.hasOwnProperty.call(totals, key)) {
+          totals[key] += 1;
+        }
+      });
+
+      return totals;
+    }
+
+    function renderAppointmentSummaryCard({ title, period, totals }) {
+      const card = document.createElement('article');
+      card.className = 'appointment-summary-card';
+
+      const heading = document.createElement('div');
+      heading.className = 'appointment-summary-heading';
+
+      const titleElement = document.createElement('h2');
+      titleElement.className = 'appointment-summary-title';
+      titleElement.textContent = title;
+
+      const periodElement = document.createElement('span');
+      periodElement.className = 'appointment-summary-period';
+      periodElement.textContent = period;
+
+      heading.append(titleElement, periodElement);
+
+      const statuses = document.createElement('div');
+      statuses.className = 'appointment-summary-statuses';
+
+      [
+        ['agendado', 'Agendados'],
+        ['desatualizado', 'Desatualizados'],
+        ['realizado', 'Realizados'],
+        ['reagendado', 'Reagendados'],
+        ['ausencia', 'Ausências']
+      ].forEach(([key, label]) => {
+        const item = document.createElement('div');
+        item.className = 'appointment-summary-status';
+
+        const value = document.createElement('strong');
+        value.className = 'appointment-summary-value';
+        value.textContent = String(totals[key] || 0);
+
+        const labelElement = document.createElement('span');
+        labelElement.className = 'appointment-summary-label';
+        labelElement.textContent = label;
+
+        item.append(value, labelElement);
+        statuses.append(item);
+      });
+
+      card.append(heading, statuses);
+      return card;
+    }
+
+    function renderAppointmentSummary(monthValue, selectedFamilyId = '') {
+      if (!appointmentSummaryGrid) {
+        return;
+      }
+
+      const month = normalizeMonthValue(monthValue);
+      const year = month.slice(0, 4);
+      const allAppointments = [...(appState.collections?.appointments || [])]
+        .filter((appointment) => !selectedFamilyId || appointment.familyId === selectedFamilyId);
+      const monthlyAppointments = allAppointments.filter((appointment) => getMonthFromDateValue(appointment.date) === month);
+      const yearlyAppointments = allAppointments.filter((appointment) => getYearFromDateValue(appointment.date) === year);
+      const monthText = formatDisplayMonth(month);
+      const formattedMonth = monthText.charAt(0).toUpperCase() + monthText.slice(1);
+
+      appointmentSummaryGrid.innerHTML = '';
+      appointmentSummaryGrid.append(
+        renderAppointmentSummaryCard({
+          title: 'Totais do mês visualizado',
+          period: formattedMonth,
+          totals: getAppointmentStatusTotals(monthlyAppointments)
+        }),
+        renderAppointmentSummaryCard({
+          title: 'Totais do ano visualizado',
+          period: year,
+          totals: getAppointmentStatusTotals(yearlyAppointments)
+        })
+      );
     }
 
     function renderAppointments() {
@@ -6417,6 +6746,8 @@
         const monthText = formatDisplayMonth(month);
         appointmentMonthLabel.textContent = monthText.charAt(0).toUpperCase() + monthText.slice(1);
       }
+
+      renderAppointmentSummary(month, selectedFamilyId);
 
       appointmentList.innerHTML = '';
       const appointments = [...(appState.collections?.appointments || [])]
@@ -6458,18 +6789,7 @@
         statusLabel.textContent = 'Status';
         const statusSelect = document.createElement('select');
         statusSelect.setAttribute('aria-label', `Status do agendamento de ${appointment.familyTitle || 'família'}`);
-        [
-          ['', 'Pendente'],
-          ['realizado', 'Realizado'],
-          ['reagendado', 'Reagendado'],
-          ['ausencia', 'Ausência']
-        ].forEach(([value, label]) => {
-          const option = document.createElement('option');
-          option.value = value;
-          option.textContent = label;
-          statusSelect.append(option);
-        });
-        statusSelect.value = appointment.status || '';
+        renderAppointmentStatusOptions(statusSelect, appointment);
         statusSelect.addEventListener('change', () => updateAppointmentStatus(appointment.id, statusSelect.value));
         statusField.append(statusLabel, statusSelect, createAppointmentEditButton(appointment));
 
@@ -6480,6 +6800,61 @@
 
     function changeAppointmentMonth(offset) {
       activeAppointmentMonth = shiftMonth(activeAppointmentMonth, offset);
+      renderAppointments();
+    }
+
+    function setAppointmentMonthJumpStatus(message = '', state = 'idle') {
+      if (!appointmentMonthJumpStatus) {
+        return;
+      }
+
+      appointmentMonthJumpStatus.textContent = message;
+      appointmentMonthJumpStatus.dataset.state = state;
+    }
+
+    function openAppointmentMonthJumpModal() {
+      if (!appointmentMonthJumpModal || !appointmentMonthJumpInput) {
+        return;
+      }
+
+      appointmentMonthJumpInput.value = normalizeMonthValue(activeAppointmentMonth);
+      setAppointmentMonthJumpStatus('');
+      appointmentMonthJumpModal.classList.add('visible');
+      window.setTimeout(() => appointmentMonthJumpInput.focus(), 0);
+    }
+
+    function closeAppointmentMonthJumpModal() {
+      if (!appointmentMonthJumpModal) {
+        return;
+      }
+
+      appointmentMonthJumpModal.classList.remove('visible');
+      setAppointmentMonthJumpStatus('');
+    }
+
+    function handleAppointmentMonthJumpSubmit(event) {
+      event.preventDefault();
+
+      const selectedMonth = String(appointmentMonthJumpInput?.value || '').trim();
+      if (!/^\d{4}-\d{2}$/.test(selectedMonth)) {
+        setAppointmentMonthJumpStatus('Selecione um mês e ano válidos.', 'error');
+        appointmentMonthJumpInput?.focus();
+        return;
+      }
+
+      activeAppointmentMonth = normalizeMonthValue(selectedMonth);
+      closeAppointmentMonthJumpModal();
+      renderAppointments();
+    }
+
+    function openAppointmentScreenWithoutFilters() {
+      activeAppointmentMonth = getCurrentMonthValue();
+
+      if (appointmentFamilyFilter) {
+        appointmentFamilyFilter.value = '';
+      }
+
+      showScreen('appointment-screen');
       renderAppointments();
     }
 
@@ -7118,6 +7493,11 @@
 
       if (navigationButton.dataset.screen === 'add-family-screen') {
         openFamilyCreateMode();
+        return;
+      }
+
+      if (navigationButton.dataset.screen === 'appointment-screen') {
+        openAppointmentScreenWithoutFilters();
         return;
       }
 
@@ -9566,19 +9946,7 @@
 
           const statusSelect = document.createElement('select');
           statusSelect.setAttribute('aria-label', `Status do agendamento de ${appointment.familyTitle || 'família'}`);
-          [
-            ['', 'Pendente'],
-            ['realizado', 'Realizado'],
-            ['reagendado', 'Reagendado'],
-            ['ausencia', 'Ausência']
-          ].forEach(([value, label]) => {
-            const option = document.createElement('option');
-            option.value = value;
-            option.textContent = label;
-            statusSelect.append(option);
-          });
-
-          statusSelect.value = appointment.status || '';
+          renderAppointmentStatusOptions(statusSelect, appointment);
           statusSelect.addEventListener('change', () => updateAppointmentStatus(appointment.id, statusSelect.value));
           statusField.append(statusLabel, statusSelect, createAppointmentEditButton(appointment));
 
@@ -10738,6 +11106,25 @@
       document.querySelector('#family-nome')?.focus();
     }
 
+    function cancelFamilyEditMode() {
+      if (!activeViewedFamilyId) {
+        return;
+      }
+
+      const family = findFamilyById(activeViewedFamilyId);
+
+      if (!family) {
+        return;
+      }
+
+      closeEditConfirmModal();
+      fillFamilyFormFromRecord(family);
+      setFamilyViewMode(true);
+      familyFormStatus.textContent = 'Edição cancelada. Modo visualização.';
+      familyFormStatus.dataset.state = 'idle';
+      setFamilyFormBaseline();
+    }
+
     function saveFamily(event) {
       event.preventDefault();
       updateFamilyComputedFields();
@@ -10888,6 +11275,14 @@
         topSaveFamilyButton.hidden = true;
       }
 
+      if (cancelFamilyEditButton) {
+        cancelFamilyEditButton.hidden = true;
+      }
+
+      if (topCancelFamilyEditButton) {
+        topCancelFamilyEditButton.hidden = true;
+      }
+
       if (editFamilyButton) {
         editFamilyButton.hidden = !isViewMode || !activeViewedFamilyId;
       }
@@ -10943,6 +11338,14 @@
 
       if (topSaveFamilyButton) {
         topSaveFamilyButton.hidden = false;
+      }
+
+      if (cancelFamilyEditButton) {
+        cancelFamilyEditButton.hidden = false;
+      }
+
+      if (topCancelFamilyEditButton) {
+        topCancelFamilyEditButton.hidden = false;
       }
 
       if (editFamilyButton) {
@@ -11268,7 +11671,7 @@
 
         const status = document.createElement('span');
         status.className = 'upcoming-appointment-status';
-        status.textContent = getAppointmentStatusLabel(appointment.status);
+        status.textContent = getAppointmentStatusLabel(appointment.status, appointment);
 
         topline.append(date, status);
 
@@ -11525,6 +11928,14 @@
     });
     appointmentPrevMonthButton?.addEventListener('click', () => changeAppointmentMonth(-1));
     appointmentNextMonthButton?.addEventListener('click', () => changeAppointmentMonth(1));
+    appointmentMonthLabel?.addEventListener('click', openAppointmentMonthJumpModal);
+    appointmentMonthJumpForm?.addEventListener('submit', handleAppointmentMonthJumpSubmit);
+    appointmentMonthJumpCancelButton?.addEventListener('click', closeAppointmentMonthJumpModal);
+    appointmentMonthJumpModal?.addEventListener('click', (event) => {
+      if (event.target === appointmentMonthJumpModal) {
+        closeAppointmentMonthJumpModal();
+      }
+    });
     appointmentFamilyFilter?.addEventListener('change', renderAppointments);
     familyAddAppointmentButton?.addEventListener('click', openFamilyAppointmentCreateModal);
     familyAppointmentPrevMonthButton?.addEventListener('click', () => changeFamilyAppointmentMonth(-1));
@@ -11556,6 +11967,8 @@
     if (familyForm) {
       familyForm.addEventListener('submit', saveFamily);
       editFamilyButton?.addEventListener('click', startFamilyEditMode);
+      cancelFamilyEditButton?.addEventListener('click', cancelFamilyEditMode);
+      topCancelFamilyEditButton?.addEventListener('click', cancelFamilyEditMode);
       registerResourceButton?.addEventListener('click', openResourceCreateModal);
       evolutionButton?.addEventListener('click', openEvolutionCreateModal);
       cancelEditConfirmButton?.addEventListener('click', closeEditConfirmModal);
