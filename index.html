@@ -6093,7 +6093,7 @@
         return;
       }
 
-      if (password !== '88008888') {
+      if (password !== '88184340') {
         setDeleteAllRecordsStatus('Senha incorreta. Nenhum registro foi apagado.', 'error');
         return;
       }
@@ -13067,7 +13067,7 @@
         badge.textContent = getUserStatusLabel(user);
         actions.append(badge);
 
-        const button = document.createElement('button');
+        /*const button = document.createElement('button');
         button.type = 'button';
         button.className = isActive ? 'danger-button' : 'solid-button';
         button.dataset.userAction = isActive ? 'deactivate' : 'activate';
@@ -13082,75 +13082,13 @@
           button.title = 'Não é possível desativar o último usuário ativo.';
         }
 
-        actions.append(button);
+        actions.append(button);*/
         card.append(content, actions);
         userManagementList.append(card);
       });
     }
 
-    function toggleUserActivation(userId, shouldActivate) {
-      const users = getRegisteredUsers();
-      const user = users.find((item) => item.id === userId);
-
-      if (!user) {
-        setUserManagementStatus('Usuário não encontrado.', 'error');
-        return;
-      }
-
-      const wasActive = isUserActive(user);
-      const nextActive = Boolean(shouldActivate);
-
-      if (wasActive === nextActive) {
-        setUserManagementStatus('Nenhuma alteração necessária para este usuário.', 'idle');
-        renderUserManagement();
-        return;
-      }
-
-      if (!nextActive) {
-        if (currentUser?.id === user.id) {
-          setUserManagementStatus('Não é possível desativar o usuário que está logado.', 'error');
-          return;
-        }
-
-        const activeUsersCount = users.filter(isUserActive).length;
-        if (activeUsersCount <= 1) {
-          setUserManagementStatus('Não é possível desativar o último usuário ativo.', 'error');
-          return;
-        }
-
-        const confirmed = window.confirm(`Deseja desativar o usuário ${user.username}? Ele não conseguirá acessar o sistema, mas todos os registros feitos por ele permanecerão intactos.`);
-        if (!confirmed) {
-          setUserManagementStatus('Desativação cancelada.', 'idle');
-          return;
-        }
-      }
-
-      const now = new Date().toISOString();
-      user.isActive = nextActive;
-      user.updatedAt = now;
-      if (nextActive) {
-        user.disabledAt = '';
-        user.disabledBy = '';
-      } else {
-        user.disabledAt = now;
-        user.disabledBy = currentUser?.id || '';
-      }
-
-      addAuditLog({
-        action: nextActive ? 'Reativou usuário' : 'Desativou usuário',
-        changeType: 'edit',
-        entityType: 'Usuário',
-        entityId: user.id,
-        title: `${nextActive ? 'Usuário reativado' : 'Usuário desativado'}: ${user.username}`,
-        changes: [
-          { label: 'Usuário', fieldPath: 'username', before: user.username, after: user.username, beforeRaw: user.username, afterRaw: user.username, valueType: 'text' },
-          { label: 'Status', fieldPath: 'isActive', before: wasActive ? 'Ativo' : 'Desativado', after: nextActive ? 'Ativo' : 'Desativado', beforeRaw: wasActive, afterRaw: nextActive, valueType: 'boolean' }
-        ]
-      });
-
-      saveAppState();
-      setUserManagementStatus(nextActive ? 'Usuário reativado com sucesso.' : 'Usuário desativado com sucesso. Registros e histórico permaneceram intactos.', 'connected');
-    }
+    //botaoDeleteUsuarioaAQUI
 
     function addChange(changes, label, beforeValue, afterValue, type = 'text', fieldPath = '') {
       const beforeText = stringifyCompareValue(beforeValue);
